@@ -1,0 +1,6 @@
+*
+!.gitignore
+!*.cpp
+!*.h
+!*.hpp
+!/parsing
