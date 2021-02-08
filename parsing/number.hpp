@@ -1,6 +1,9 @@
-#include <ctype.h>
+/* Included in main.cpp */
+
 #ifndef INT16
     #define INT16 unsigned short
+    #define INT8 unsigned char
+    #include <ctype.h>
     #include <string>
     using std::string;
 #endif
