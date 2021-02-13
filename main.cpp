@@ -18,6 +18,11 @@ using std::string;
 
 #include <string.h>
 
+// a2 216
+// Α2 ΣΕΛΙΔΑ 216
+// b1 b2, 255
+// 221 ekthesi
+
 void printDelimiter(std::string& delimeter, INT16& index) {
     std::cout << delimeter[0];
     for (INT8 k=1; k < delimeter.size(); k++) 

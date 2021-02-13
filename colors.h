@@ -2,6 +2,8 @@
     #include <string>
     using std::string;
 #endif
+#include <array>
+#include <sqlite3.h>
 
 namespace colors {
     string PURPLE =    "\033[95m";
@@ -17,4 +19,20 @@ namespace colors {
     string WHITE =     "\033[97m";
     string GREY =      "\033[30m";
     string DEFAULT = colors::OKCYAN;
+
+    std::array<string, 12> arr = {
+        colors::PURPLE,
+        colors::BLUE,
+        colors::OKCYAN,
+        colors::GREEN,
+        colors::DARKGREEN,
+        colors::YELLOW,
+        colors::RED,
+        colors::ENDC,
+        colors::BOLD,
+        colors::UNDERLINE,
+        colors::WHITE,
+        colors::GREY,
+    };
 };
+
