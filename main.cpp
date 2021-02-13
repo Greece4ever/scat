@@ -162,7 +162,6 @@ int main(int argc, char *argv[]) {
         {"&", colors::YELLOW},
         {"|", colors::YELLOW},
         {"^", colors::YELLOW},
-
     };
 
 

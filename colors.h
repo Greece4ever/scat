@@ -2,8 +2,9 @@
     #include <string>
     using std::string;
 #endif
-#include <array>
-#include <sqlite3.h>
+#ifndef _GLIBCXX_MAP
+    #include <map>
+#endif
 
 namespace colors {
     string PURPLE =    "\033[95m";
@@ -20,19 +21,33 @@ namespace colors {
     string GREY =      "\033[30m";
     string DEFAULT = colors::OKCYAN;
 
-    std::array<string, 12> arr = {
-        colors::PURPLE,
-        colors::BLUE,
-        colors::OKCYAN,
-        colors::GREEN,
-        colors::DARKGREEN,
-        colors::YELLOW,
-        colors::RED,
-        colors::ENDC,
-        colors::BOLD,
-        colors::UNDERLINE,
-        colors::WHITE,
-        colors::GREY,
+    std::map<int, std::string> IScodes = {
+            {1,  colors::PURPLE },
+            {2,  colors::BLUE },
+            {3,  colors::OKCYAN },
+            {4,  colors::GREEN },
+            {5,  colors::DARKGREEN },
+            {6,  colors::YELLOW },
+            {7,  colors::RED },
+            {8,  colors::ENDC },
+            {9,  colors::BOLD },
+            {10, colors::UNDERLINE },
+            {11, colors::WHITE },
+            {12, colors::GREY },
+    };
+
+    std::map<std::string, int> SIcodes = {
+        { "PURPLE",    1},
+        { "BLUE",      2},
+        { "OKCYAN",    3},
+        { "GREEN",     4},
+        { "DARKGREEN", 5},
+        { "YELLOW",    6},
+        { "RED",       7},
+        { "ENDC",      8},
+        { "BOLD",      9},
+        { "UNDERLINE", 10},
+        { "WHITE",     11},
+        { "GREY",      12}
     };
 };
-
