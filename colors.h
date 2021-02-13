@@ -1,3 +1,6 @@
+#ifndef __COLOR__
+    #define __COLOR__ 0xFFFF
+#endif
 #ifndef __BASE_CAT__
     #include <string>
     using std::string;

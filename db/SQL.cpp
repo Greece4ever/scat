@@ -2,11 +2,21 @@
 #include <iostream>
 #include "sql.h"
 #include "../colors.h"
+#define ___CALLBACK__ int (*callback)(void*,int,char**,char**)
 #define ferr(x) std::cout << colors::RED << "[SQL Error]" << colors::ENDC << " " << x << "\n"
 
 int callback(void *NotUsed, int argcount, char **argv, char **azColName) {
-    return 0;
+    return 1;
 }
+
+int add(int a, int b) {
+    return a + b;
+}
+
+void test(int (*add)(int, int))  {
+    std::cout << add(1, 2) << "\n";
+}
+
 
 class DB
 {
@@ -23,8 +33,13 @@ class DB
             }
         }
 
-        bool execute(std::string sql_comamnd, bool print_err=true ) {
-            *rcode = sqlite3_exec(this->database, sql_comamnd.c_str(), callback, 0, &err_msg);
+
+        bool execute(std::string sql_comamnd, 
+            bool print_err=true,
+            int (*onResponse)(void*, int, char**, char**)=callback) 
+        {
+            
+            *rcode = sqlite3_exec(this->database, sql_comamnd.c_str(), onResponse, 0, &err_msg);
             if (*rcode != SQLITE_OK) {
                 if (print_err)
                     ferr(err_msg);
@@ -32,6 +47,22 @@ class DB
             }
             return true;
         }
+
+
+        void insert(std::string table_name, int argc, std::string values[]) {
+            std::string statement = "INSERT INTO " + table_name + " VALUES (NULL, " ;
+            int i = 0;
+            for (i=0; i < argc - 1; i++) {
+                escapeSQL(values[i]);
+                statement += + "\"" + values[i] + "\", ";
+            }
+            statement += + "\"" + values[i] + "\"";
+
+            statement.push_back(')');
+            statement.push_back(';');
+            this->execute(statement);
+        }
+
 
         void commit() {
             sqlite3_exec(this->database, "END TRANSACTION;", NULL, NULL, NULL);
@@ -44,6 +75,7 @@ class DB
         }
 };
 
+
 class KeywordDB 
 {
     DB *database;
@@ -54,41 +86,34 @@ class KeywordDB
 
         void createKeyword(std::string kwrd, std::string color) {
             DB db = *database;
-            std::string query = R"sql(
-                INSERT INTO KWD VALUES (NULL, %1, %2);
-            )sql";
-
+            std::string createSQL = R"sql(INSERT INTO KWD VALUES (NULL, "%1", %2))sql";
             escapeSQL(kwrd);
+            replaceOne(createSQL, "%1", kwrd);
+            std::cout << createSQL << "\n";
+
+//          std::string fetchSQL = R"sql(SELECT rowid from KWD WHERE KWD.KEYWORD="def" AND KWD.COLOR=1)sql";
 
         }
 
 };
 
-int main() {
-    // std::string unespaced = "takis\"; --\n DROP ALL DATABASES;";
-    
-    std::string unespaced = "\" \" \" \" \" myNewLineString \" \" \" \"; DROP TABLE SMB; \\n  ";
-    DB database(".srcds"); SQL_INIT();
+int callback() {
 
-    escapeSQL(unespaced);
+}
+
+int main() {    
+
+    test(add);
+    exit(EXIT_SUCCESS);
+    DB database(".srcds"); SQL_INIT();
 
     database.execute(CREATE_COLLUMNS);
     database.commit();
 
-    std::string sql = R"sql(INSERT INTO KWD VALUES (NULL, "def", 1))sql";
-    database.execute(sql);
-    database.commit();
 
-    // bool r_value = database.execute(R"sql(
-    //     INSERT INTO KWD ("ID", "KEYWORD", "COLOR")
-    //     VALUES (NULL, "def", 1)
-    //  )sql");
+    // std::string fetchSQL = R"sql(SELECT ("rowid") from KWD where KWD.color=1)sql";
+    // database.execute(fetchSQL, true, );
 
-    // if (!r_value) {
-        // std::cout << "Insert failed\n";
-    // }
-
-    // database.commit();
 
     return EXIT_SUCCESS;
 }
