@@ -39,6 +39,22 @@ namespace colors {
             {12, colors::GREY },
     };
 
+    std::map<std::string, std::string> SScodes = {
+            {"1",  colors::PURPLE },
+            {"2",  colors::BLUE },
+            {"3",  colors::OKCYAN },
+            {"4",  colors::GREEN },
+            {"5",  colors::DARKGREEN },
+            {"6",  colors::YELLOW },
+            {"7",  colors::RED },
+            {"8",  colors::ENDC },
+            {"9",  colors::BOLD },
+            {"10", colors::UNDERLINE },
+            {"11", colors::WHITE },
+            {"12", colors::GREY },
+    };
+
+
     std::map<std::string, int> SIcodes = {
         { "PURPLE",    1},
         { "BLUE",      2},
@@ -53,4 +69,5 @@ namespace colors {
         { "WHITE",     11},
         { "GREY",      12}
     };
+
 };

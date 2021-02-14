@@ -12,13 +12,18 @@
 #define __LANG_PARSE__ 0
 #include "./lang_parse.cpp"
 #define SQL_GET_LAST_INSERT_ID "SELECT last_insert_rowid()"
+#ifndef _GLIBCXX_ARRAY
+    #include <array>
+#endif
 
 using std::vector;
 using std::string;
 
+
 namespace cs {  
     vector<string> data;
-    
+    vector<std::array<string, 2>> KEYWORDS;
+    vector<std::array<string, 3>> REP_KWDS;    
 
     int default_(void *NotUsed, int count, char **data, char **columns) {
         return EXIT_SUCCESS;
@@ -31,8 +36,47 @@ namespace cs {
             // std::cout << columns[i] << ": " << data[i] << "\n";
             cs::data.push_back(data[i]);
         }
+
         return 0;
     }
+
+    #ifdef ___DEBUG___
+        int test(void *NotUsed, int count, char **data, char **columns) {
+            int idx;
+
+            printf("There are %d column(s)\n", count);
+
+            for (idx = 0; idx < count; idx++) {
+                printf("The data in column \"%s\" is: %s\n", columns[idx], data[idx]);
+            }
+
+            printf("\n");
+            return 0;
+        }
+    #endif
+
+    int insertCallback(void *NotUsed, int count, char **data, char **columns) {
+        for (int i=0; i < count; i++) {
+            cs::data.push_back(data[i]);
+        }
+        return EXIT_SUCCESS;
+    }
+
+    int KeyWordInsertCallback(void *NotUsed, int count, char **data, char **columns) {
+        cs::KEYWORDS.push_back({data[0], colors::SScodes.at(data[1])});
+        return EXIT_SUCCESS;
+    }
+
+    // colors::bquotes
+
+    int RptKwdInsertionCallback(void *NotUsed, int count, char **data, char **columns) {
+        string s1 = data[1];
+        if (s1 == (std::string)"\\n") // Really...
+            s1 = "\n";
+        cs::REP_KWDS.push_back({data[0], s1, colors::SScodes.at(data[2]) });
+        return EXIT_SUCCESS;
+    }
+
 }
 
 
@@ -215,19 +259,104 @@ void createLangKwdConenctions(DB& database, KWD_ID id_data) {
     }
 }
 
+const string comma = ",";
+
+string VecToString(vector<string>& vect) {
+    string arr = "(";
+    int i = 0;
+    for (i=0; i < vect.size() - 1; i++) {
+        arr += vect[i] + ",";
+    }
+
+    arr += vect[i];
+    arr.push_back(')');
+    return arr;
+}
+
+void get_kwds(DB& database, string language) 
+{
+    escapeSQL(language);
+    
+    string QUERY = R"sql(
+        SELECT "rowid" from
+        LANG WHERE LANG.NAME="$1"
+    )sql";
+
+    replaceOne(QUERY, "$1", language);
+    database.execute(QUERY, true, cs::callback);
+    if (cs::data.size() == 0) {
+        ERROR("Language " + language + " not found.");
+        exit(EXIT_FAILURE);
+    }
+    string langID = cs::data[0];
+    std::cout << "Language ID " << langID << "\n";
+
+    string FQUERY = R"sql(
+        SELECT "KWD" FROM
+        LANG_KWD WHERE LANG=$1;
+    )sql";
+
+    replaceOne(FQUERY, "$1", langID);
+    database.execute(FQUERY, true, cs::insertCallback);
+    ERROR("Ended query for IDS");
+
+    string KWDQUERY = R"sql(
+        SELECT "KEYWORD", "COLOR" FROM KWD
+        WHERE KWD.ROWID in $1
+    )sql";
+
+    
+    replaceOne(KWDQUERY, "$1", VecToString(cs::data));
+    database.execute(KWDQUERY, true, cs::KeyWordInsertCallback);
+
+
+    vector<string>().swap( cs::data );
+
+    string FQUERY2 =R"sql(
+        SELECT "RPT" FROM LANG_RPT
+        WHERE LANG_RPT.LANG=$1;
+    )sql";
+    
+    replaceOne(FQUERY2, "$1", langID);
+    database.execute(FQUERY2, true, cs::insertCallback);
+    
+    string FQUERY3 = R"sql( 
+        SELECT  "STARTING_KEYWORD", "ENDING_KEYWORD","COLOR"
+        FROM RPT WHERE RPT.ROWID in $1
+    )sql";
+
+    replaceOne(FQUERY3, "$1", VecToString(cs::data));
+    database.execute(FQUERY3, true, cs::RptKwdInsertionCallback);
+
+
+    for (int i=0; i < cs::KEYWORDS.size(); i++) {
+        std::cout << cs::KEYWORDS[i][1] << cs::KEYWORDS[i][0] << colors::ENDC << "\n";
+    }
+
+    for (int i=0; i < cs::REP_KWDS.size(); i++) {
+        std::cout << cs::REP_KWDS[i][2] << cs::REP_KWDS[i][0] << " " << cs::REP_KWDS[i][1] << colors::ENDC << "\n";
+    }
+
+    
+
+}
+
+
 int main() {    
     DB database("KEYWORDS.sqlite3");
-    SQL_INIT();
+    // SQL_INIT();
 
-    database.execute(CREATE_COLLUMNS);
-    database.execute(ManyToMany);
-    database.commit();
+    // database.execute(CREATE_COLLUMNS);
+    // database.execute(ManyToMany);
+    // database.commit();
 
-    langData data = parse_file("./cpp.lang");
+    // langData data = parse_file("./cpp.lang");
     // printKwds(data);
-    KWD_ID id_data = createLang(database, data);
-    createLangKwdConenctions(database, id_data);
+    // KWD_ID id_data = createLang(database, data);
+    // createLangKwdConenctions(database, id_data);
+    get_kwds(database, ".cpp");
 
+    // auto a = colors::bquotes.find("hey");
 
     return EXIT_SUCCESS;
 }
