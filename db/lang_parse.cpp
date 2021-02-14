@@ -1,4 +1,7 @@
-#include <fstream>
+/* Parse a .lang file containg syntax highlighting rules */
+#ifndef _GLIBCXX_FSTREAM
+    #include <fstream>
+#endif
 #ifndef _STRING_H
     #include <string.h>
 #endif
@@ -23,14 +26,15 @@ using std::vector;
 using std::tuple;
 
 #define KWD_MATRIX      vector<   tuple<string, int>  >
-#define REP_KWD_MATRIX  vector< tuple< tuple<string, string>, int> >
+#define REP_KWD_MATRIX  vector<   tuple< tuple<string, string>, int> >
 
+#ifndef ___MAIN___
+    #define ___DEBUG___ 0xFFFFF & 0xCCC << 0b101
+#endif
 
 /* Quite limiting, the standard library is... */
 
 void trimForward(std::string& str) {
-    if (str.size() == 0)
-        return;
     while (str.size() > 0 && isspace(str[0]))
     {
         str.erase(str.begin());
@@ -39,9 +43,6 @@ void trimForward(std::string& str) {
 
 
 void trimBackward(std::string& str) {
-    if (str.size() == 0)
-        return;
-
     int size = str.size();
     while (size > 0 && isspace(str[size - 1])) {
         str.erase(str.begin() + size - 1);
@@ -200,17 +201,17 @@ void printKwds(langData data) {
 
     std::cout << "File extension \"" << colors::BOLD << file_extension <<colors::ENDC << "\"\n";
 
-    std::cout << "Keywords:\n";
+    std::cout << "\tKeywords:\n";
     for (ushort i=0; i < kwd_colors.size(); i++) {
         string kwd = std::get<0>(kwd_colors[i]);
         int ccode =  std::get<1>(kwd_colors[i]);
 
         string color = colors::IScodes.at(ccode);
-        std::cout << "\t" << color;
+        std::cout << "\t\t" << color;
         std::cout << kwd << colors::ENDC << "\n";
     }
 
-    std::cout << "Repeating Keywords:\n";
+    std::cout << "\tRepeating Keywords:\n";
 
     for (ushort i=0; i < rep_kwd_colors.size(); i++) {
         string start = std::get<0>(std::get<0>(rep_kwd_colors[i]));
@@ -218,14 +219,15 @@ void printKwds(langData data) {
 
         int ccode = std::get<1>(rep_kwd_colors[i]);
         string color = colors::IScodes.at(ccode);
-        std::cout << color;
+        std::cout << "\t\t" << color;
         std::cout << "\"" << start << "\"\t\"" << end << "\"" << colors::ENDC << "\n";
     }
 }
 
-
-int main() {
-    langData data = parse_file("./test.lang");
-    printKwds(data);
-    return 0;
-}
+#ifdef ___DEBUG___
+    int main() {
+        langData data = parse_file("./test.lang");
+        printKwds(data);
+        return EXIT_SUCCESS;
+    }
+#endif

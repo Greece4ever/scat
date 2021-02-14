@@ -17,6 +17,7 @@ using std::string;
 #include "./parsing/general.hpp"
 
 #include <string.h>
+#define ___MAIN___ 0xFFFF
 
 // a2 216
 // Α2 ΣΕΛΙΔΑ 216
