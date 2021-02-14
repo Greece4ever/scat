@@ -7,28 +7,34 @@
 #ifndef _GLIBCXX_VECTOR
     #include <vector>
 #endif
-#ifndef ___MAIN___
-    #define ___DEBUG___ 0xFFFFF & 0xCCC << 0b101
-#endif
 #define ___CALLBACK__ (void*,int,char**,char**)
 #define ferr(x) std::cout << colors::RED << "[SQL Error]" << colors::ENDC << " " << x << "\n"
+#define __LANG_PARSE__ 0
+#include "./lang_parse.cpp"
+#define SQL_GET_LAST_INSERT_ID "SELECT last_insert_rowid()"
 
 using std::vector;
 using std::string;
 
-int callback(void *NotUsed, int count, char **data, char **columns) {
-    // int idx;
+namespace cs {  
+    vector<string> data;
+    
 
-    // printf("There are %d column(s)\n", count);
+    int default_(void *NotUsed, int count, char **data, char **columns) {
+        return EXIT_SUCCESS;
+    }
 
-    // for (idx = 0; idx < count; idx++) {
-    //     printf("The data in column \"%s\" is: %s\n", columns[idx], data[idx]);
-    // }
 
-    // printf("\n");
-
-    // return 0;
+    int callback(void *NotUsed, int count, char **data, char **columns) {
+        vector<string>().swap( cs::data );
+        for (int i=0; i < count; i++) {
+            // std::cout << columns[i] << ": " << data[i] << "\n";
+            cs::data.push_back(data[i]);
+        }
+        return 0;
+    }
 }
+
 
 class DB
 {
@@ -36,19 +42,18 @@ class DB
     private:
         sqlite3 *database;
         int  *rcode = new int;
-        char *err_msg;
+        char *err_msg = nullptr;
     public:
         DB(std::string path) {
-            *rcode = sqlite3_open(".srcds", &database);    
+            *rcode = sqlite3_open(path.c_str(), &database);    
             if (*rcode != SQLITE_OK) {
                 exit(EXIT_FAILURE);
             }
         }
 
-
         bool execute(std::string sql_comamnd, 
             bool print_err=true,
-            int (*onResponse)(void*, int, char**, char**)=callback) 
+            int (*onResponse)(void*, int, char**, char**)=cs::default_) 
         {
             
             *rcode = sqlite3_exec(this->database, sql_comamnd.c_str(), onResponse, 0, &err_msg);
@@ -61,7 +66,7 @@ class DB
         }
 
 
-        bool insert(std::string table_name, vector<string> values, bool print_err=true, int (*callback)___CALLBACK__=callback) {
+        bool insert(std::string table_name, vector<string> values, bool print_err=true, int (*callback)___CALLBACK__=cs::default_) {
             std::string statement = "INSERT INTO " + table_name + " VALUES (NULL, " ;
             int i = 0;
             int argc = values.size();
@@ -73,19 +78,15 @@ class DB
 
             statement.push_back(')');
             statement.push_back(';');
+
             return this->execute(statement, print_err, callback);
         }
+
 
 
         void commit() {
             sqlite3_exec(this->database, "END TRANSACTION;", NULL, NULL, NULL);
         }
-
-    #ifdef ___DEBUG___
-        sqlite3* getDB() {
-            return this->database;
-        }
-    #endif
         
         ~DB() {
             delete rcode;
@@ -100,33 +101,123 @@ int callbackID(void *NotUsed, int count, char **data, char **columns) {
     return ID;
 }
 
-int GetOrCrate(DB& database) {
-    bool inserted = database.insert("KWD", {"typedef", "95"}, false);
-    if (inserted) {
-        database.execute(R"sql(SELECT last_insert_rowid())sql", false, callbackID);
-        database.commit();
+class KWD {
+    public:
+        int* ID      = new int;
+        string* name = new string;
+        int* color   = new int;
+
+        KWD(int ID, string NAME, int COLOR) {
+            *this->ID    = ID;
+            *this->name  = NAME;
+            *this->color = COLOR;
+        };
+
+        ~KWD() {
+            std::cout << "Destructor\n";
+            delete ID;
+            delete color;
+            delete name;
+        }
+
+};
+
+string insertAndGetID(DB& database, string kwd, string color) {
+    bool inserted = database.insert("KWD", {kwd, color}, false);
+    if (!inserted) {
+        string query = R"sql(
+            SELECT "rowid" FROM KWD
+            WHERE COLOR=$1 and KEYWORD="$2";
+        )sql";
+
+        escapeSQL(kwd);
+        
+        replaceOne(query, "$1", color);
+        replaceOne(query, "$2", kwd);
+        database.execute(query, true, cs::callback);
+        return cs::data[0];   
     }
-    return 0;
+    database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
+    return cs::data[0];
+}
+
+string insertSymbolAndGetId(DB& database, string STARTING_KEYWORD, string ENDING_KEYWORD, string color)
+{
+    bool inserted = database.insert("RPT", {STARTING_KEYWORD, ENDING_KEYWORD, color}, false);
+    if (!inserted) {
+        string query = R"sql(
+            SELECT "rowid" FROM RPT
+            WHERE RPT.STARTING_KEYWORD="$1" AND RPT.ENDING_KEYWORD="$2"
+            AND RPT.COLOR=$3;
+        )sql";
+
+        escapeSQL(STARTING_KEYWORD);
+        escapeSQL(ENDING_KEYWORD);
+
+        replaceOne(query, "$1", STARTING_KEYWORD);
+        replaceOne(query, "$2", ENDING_KEYWORD);
+        replaceOne(query, "$3", color);
+
+        database.execute(query, true, cs::callback);
+        return cs::data[0];
+    }
+    database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
+    return cs::data[0];
+}
+
+void createLang(DB& database, langData data) {
+    escapeSQL(data.file_extension);
+    bool inserted =  database.insert("LANG", {data.file_extension}, false);
+    if (!inserted) {
+        string QUERY = R"sql(
+            SELECT "rowid" FROM LANG
+            WHERE LANG.NAME="$1"
+        )sql";
+        replaceOne(QUERY, "$1", data.file_extension);
+        database.execute(QUERY, true, cs::callback);
+    }
+    else 
+        database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
+    
+    string langID = cs::data[0];
+    vector<string> KEYWORD_IDS;
+    vector<string> SYMBOL_IDS;
+
+
+    for (int i=0; i < data.kwd_colors.size(); i++) {
+        string KEYWORD = std::get<0>(data.kwd_colors[i]);
+        string COLOR = std::to_string( std::get<1>(data.kwd_colors[i]) );
+        KEYWORD_IDS.push_back( insertAndGetID(database, KEYWORD, COLOR) );
+    }
+
+    for (int i=0; i < data.rep_kwd_colors.size(); i++) {
+        string color = std::to_string ( std::get<1>( data.rep_kwd_colors[i] ) );
+        string start_kwd  = std::get<0> ( std::get<0>( data.rep_kwd_colors[i] )  );
+        string endng_kwd  = std::get<1> ( std::get<0>( data.rep_kwd_colors[i] )  );
+        SYMBOL_IDS.push_back(  insertSymbolAndGetId(database, start_kwd, endng_kwd, color)  );
+    }
+
+
+    // for (int i=0; i < KEYWORD_IDS.size(); i++) {
+    //     std::cout << "KEYWORD ID -> " << KEYWORD_IDS[i] << "\n";
+    // }
+
+    // for (int i=0; i < SYMBOL_IDS.size(); i++) {
+    //     std::cout << "SYMBOL ID -> " << SYMBOL_IDS[i] << "\n";
+    // }
+
+
 }
 
 
 int main() {    
-    DB database(".srcds"); SQL_INIT();
-
+    DB database("KEYWORDS.sqlite3");
+    SQL_INIT();
     database.execute(CREATE_COLLUMNS);
-    database.commit();
 
-    char **collumns;
-    char *err;
-    sqlite3_exec(database.getDB(), R"sql(SELECT "rowid", "keyword", "color" FROM KWD where color=1)sql", callback, collumns, &err);
-    // for (int i=0; i < )
-    
-    // std::string fetchSQL = R"sql(SELECT "KEYWORD", "COLOR" from KWD where KWD.color=1)sql";
-    // database.execute(fetchSQL, true, callback);
-    // GetOrCrate(database);
-    // database.insert("KWD", {"def", "blue"});
-    // database.commit();
-    // database.execute(fetchSQL, true, );
+    langData data = parse_file("./cpp.lang");
+    printKwds(data);
+    createLang(database, data);
 
 
     return EXIT_SUCCESS;

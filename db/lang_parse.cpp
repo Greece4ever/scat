@@ -1,4 +1,7 @@
 /* Parse a .lang file containg syntax highlighting rules */
+#ifndef __LANG_PARSE__
+    #define __LANG_PARSE__ 1
+#endif
 #ifndef _GLIBCXX_FSTREAM
     #include <fstream>
 #endif
@@ -105,7 +108,7 @@ langData parse_file(std::string path) {
 
     string line;
     string file_extension;
-    ushort line_count;
+    ushort line_count = 0; // NOTE TODO BUG
 
 
     while (getline(file, line)) {
@@ -120,6 +123,11 @@ langData parse_file(std::string path) {
 
     if (file_extension.size() == 0) {
         ERROR("Empty file");
+        exit(EXIT_FAILURE);
+    }   
+    if ((int)file_extension.find(".") == -1) {
+        ERROR("No \".\" found in file extension \"" + file_extension + "\"");
+        ERROR("Try something like \"." + file_extension + "\"");
         exit(EXIT_FAILURE);
     }
 
@@ -178,7 +186,7 @@ langData parse_file(std::string path) {
                 );
             } 
             catch (std::out_of_range) {
-                ERROR("Color \"" + upperColor + "\"" + "not found.");
+                ERROR("Line: " + std::to_string(line_count) + " (\"" + __str__(front) + "\", \"" + __str__(back) + "\")," + " Color \"" + __str__(upperColor) + "\"" + " not found.");
                 exit(EXIT_FAILURE);
             }
         }
@@ -224,10 +232,12 @@ void printKwds(langData data) {
     }
 }
 
-#ifdef ___DEBUG___
-    int main() {
-        langData data = parse_file("./test.lang");
-        printKwds(data);
-        return EXIT_SUCCESS;
-    }
+#ifdef ___DEBUG___ 
+    #if __LANG_PARSE__
+        int main() {
+            langData data = parse_file("./cpp.lang");
+            printKwds(data);
+            return EXIT_SUCCESS;
+        }
+    #endif
 #endif

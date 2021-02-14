@@ -22,8 +22,11 @@ std::string CREATE_COLLUMNS = R"sql(
 
     -- Repeating chars (waiting for something to end like comment with "\n")
     CREATE TABLE IF NOT EXISTS RPT(
+        "ID"      INT PRIMARY KEY,
+        "STARTING_KEYWORD" TEXT NOT NULL,
         "ENDING_KEYWORD" TEXT NOT NULL,    
-        %STRUCT
+        "COLOR"   INT NOT NULL,
+        CONSTRAINT unq UNIQUE ("STARTING_KEYWORD", "ENDING_KEYWORD", "COLOR")        
     );
 
     -- Symbols that do not need to be fullmatched (e.g "+", "-" etc)
