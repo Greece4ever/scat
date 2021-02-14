@@ -1,9 +1,13 @@
-#include <sqlite3.h>
+#ifndef SQLITE3_H
+    #include <sqlite3.h>
+#endif
 #ifndef _GLIBCXX_IOSTREAM
     #include <iostream>
 #endif
 #include "sql.h"
-#include "../colors.h"
+#ifndef __COLOR__
+    #include "../colors.h"
+#endif
 #ifndef _GLIBCXX_VECTOR
     #include <vector>
 #endif
@@ -87,12 +91,38 @@ class DB
         sqlite3 *database;
         int  *rcode = new int;
         char *err_msg = nullptr;
+        bool *is_open = new bool;
+        string *path_ = new string;
     public:
         DB(std::string path) {
+            *this->path_ = path;
+            this->connect(path);
+        }
+
+        void connect(std::string path) {
             *rcode = sqlite3_open(path.c_str(), &database);    
             if (*rcode != SQLITE_OK) {
-                exit(EXIT_FAILURE);
+                *is_open = false; 
+                return;
             }
+            *is_open = true;            
+        }
+
+        bool isOpen() {
+            return *is_open;
+        }
+
+        string getPath() {
+            return *this->path_;
+        }
+
+        bool isNoSuchTableError() {
+            if (err_msg == nullptr)
+                return false;
+            string sterr = err_msg;
+            string err = toUpper(sterr);
+            int found = err.find("no such table:");
+            return found == -1;
         }
 
         bool execute(std::string sql_comamnd, 
@@ -134,6 +164,8 @@ class DB
         
         ~DB() {
             delete rcode;
+            delete path_;
+            delete is_open;
             sqlite3_free( err_msg );
             sqlite3_close( database );
         }
@@ -185,6 +217,15 @@ string insertSymbolAndGetId(DB& database, string STARTING_KEYWORD, string ENDING
 }
 
 
+
+void init_dbs(DB& database) {
+    SQL_INIT();
+    database.execute(CREATE_COLLUMNS);
+    database.execute(ManyToMany);
+    database.commit();
+}
+
+
 typedef struct
 {
     string LANG_ID;
@@ -194,9 +235,15 @@ typedef struct
 
 
 KWD_ID createLang(DB& database, langData data) {
-    escapeSQL(data.file_extension);
-    bool inserted =  database.insert("LANG", {data.file_extension}, false);
+    // escapeSQL(data.file_extension);
+    bool inserted =  database.insert("LANG", {data.file_extension}, true);
     if (!inserted) {
+        std::cout << "no inserted\n";
+        if (database.isNoSuchTableError()) {
+            init_dbs(database);
+            return createLang(database, data);
+        }
+
         string QUERY = R"sql(
             SELECT "rowid" FROM LANG
             WHERE LANG.NAME="$1"
@@ -206,7 +253,8 @@ KWD_ID createLang(DB& database, langData data) {
     }
     else 
         database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
-    
+
+
     string langID = cs::data[0];
     vector<string> KEYWORD_IDS;
     vector<string> SYMBOL_IDS;
@@ -224,6 +272,7 @@ KWD_ID createLang(DB& database, langData data) {
         string endng_kwd  = std::get<1> ( std::get<0>( data.rep_kwd_colors[i] )  );
         SYMBOL_IDS.push_back(  insertSymbolAndGetId(database, start_kwd, endng_kwd, color)  );
     }
+
 
     KWD_ID id_data;
     id_data.KEYWORD_IDS = KEYWORD_IDS;
@@ -273,8 +322,15 @@ string VecToString(vector<string>& vect) {
     return arr;
 }
 
-void get_kwds(DB& database, string language) 
+/* Set the value of
+    cs::KEYWORDS and
+    cs::REP_KWDS
+    to the array of keyword colors
+    and the array of repeated keyword colors
+ */
+void get_kwds(DB& database, string language, string language0="") 
 {
+    // Bad Code alert
     escapeSQL(language);
     
     string QUERY = R"sql(
@@ -284,12 +340,23 @@ void get_kwds(DB& database, string language)
 
     replaceOne(QUERY, "$1", language);
     database.execute(QUERY, true, cs::callback);
-    if (cs::data.size() == 0) {
-        ERROR("Language " + language + " not found.");
+    
+    if(database.isNoSuchTableError()) {
+        init_dbs(database);
+        ERROR("No Default keyword colorset found, exiting");
         exit(EXIT_FAILURE);
+        return get_kwds(database, language);
+    }
+
+    if (cs::data.size() == 0) {
+        if (language == ".default") {
+            ERROR("Language \"" + language0 + "\" not found and no default was set.");
+            ERROR("A default can be set by running --default and then the path.");
+            exit(EXIT_FAILURE);
+        }
+        return get_kwds(database, ".default", language); // Return the default language
     }
     string langID = cs::data[0];
-    std::cout << "Language ID " << langID << "\n";
 
     string FQUERY = R"sql(
         SELECT "KWD" FROM
@@ -298,7 +365,6 @@ void get_kwds(DB& database, string language)
 
     replaceOne(FQUERY, "$1", langID);
     database.execute(FQUERY, true, cs::insertCallback);
-    ERROR("Ended query for IDS");
 
     string KWDQUERY = R"sql(
         SELECT "KEYWORD", "COLOR" FROM KWD
@@ -327,36 +393,28 @@ void get_kwds(DB& database, string language)
 
     replaceOne(FQUERY3, "$1", VecToString(cs::data));
     database.execute(FQUERY3, true, cs::RptKwdInsertionCallback);
-
-
-    for (int i=0; i < cs::KEYWORDS.size(); i++) {
-        std::cout << cs::KEYWORDS[i][1] << cs::KEYWORDS[i][0] << colors::ENDC << "\n";
-    }
-
-    for (int i=0; i < cs::REP_KWDS.size(); i++) {
-        std::cout << cs::REP_KWDS[i][2] << cs::REP_KWDS[i][0] << " " << cs::REP_KWDS[i][1] << colors::ENDC << "\n";
-    }
-
-    
-
 }
 
 
-int main() {    
-    DB database("KEYWORDS.sqlite3");
-    // SQL_INIT();
 
-    // database.execute(CREATE_COLLUMNS);
-    // database.execute(ManyToMany);
-    // database.commit();
 
-    // langData data = parse_file("./cpp.lang");
-    // printKwds(data);
-    // KWD_ID id_data = createLang(database, data);
-    // createLangKwdConenctions(database, id_data);
-    get_kwds(database, ".cpp");
+#ifndef ___MAIN___
+    int main() {    
+        DB database("KEYWORDS.sqlite3");
+        // langData data = parse_file("./cpp.lang");
+        // printKwds(data);
+        KWD_ID id_data = createLang(database, data);
+        createLangKwdConenctions(database, id_data);
+        get_kwds(database, ".cpp");
+        for (int i=0; i < cs::KEYWORDS.size(); i++) {
+            std::cout << cs::KEYWORDS[i][1] << cs::KEYWORDS[i][0] << colors::ENDC << "\n";
+        }
 
-    // auto a = colors::bquotes.find("hey");
+        for (int i=0; i < cs::REP_KWDS.size(); i++) {
+            std::cout << cs::REP_KWDS[i][2] << cs::REP_KWDS[i][0] << " " << cs::REP_KWDS[i][1] << colors::ENDC << "\n";
+        }
 
-    return EXIT_SUCCESS;
-}
+
+        return EXIT_SUCCESS;
+    }
+#endif

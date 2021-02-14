@@ -60,6 +60,17 @@ void trim(std::string& str) {
 }
 
 
+string findExtension(string& str) {
+    string extension;
+    for (ushort i=str.size() - 1; i > 0; i--) {
+        extension.insert(0, 1, str[i]);
+        if (str[i] == '.')
+            break;
+    }
+    return extension;
+}
+
+
 std::string splitSpace(std::string& str) {
     std::string str1;
     int size = str.size();
@@ -73,6 +84,7 @@ std::string splitSpace(std::string& str) {
     trimForward(str);
     return str1;
 }
+
 
 std::string toUpper(std::string& str) {
     std::string str1;

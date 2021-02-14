@@ -11,13 +11,14 @@ using std::string;
 #include <fstream>
 
 #define ERROR(x) std::cerr << colors::RED << "[Error] " << colors::ENDC << x << "\n"
-#include "./cnfg.cpp"
+// #include "./cnfg.cpp"
 
 #include "./parsing/number.hpp"
 #include "./parsing/general.hpp"
 
 #include <string.h>
 #define ___MAIN___ 0xFFFF
+#include "./db/SQL.cpp"
 
 // a2 216
 // Α2 ΣΕΛΙΔΑ 216
@@ -61,13 +62,18 @@ void handleDigit(std::string& line, INT16& i, bool& previousNumRejected) {
     }
 }
 
+
 void check_line(
-    std::ifstream&    file_handler, 
-    string rep[][3],  INT8 rep_size, // Quotes, comments
-    string kwds[][2], INT8 kwd_size, // Keywords
+    std::ifstream&     file_handler, 
+    vector<std::array<string, 3>> rep,   // INT8 rep_size, // Quotes, comments
+    vector<std::array<string, 2>>      kwds,  // INT8 kwd_size, // Keywords
     string smbls[][2], INT8 smbl_size // Symbols may not be full matches like keywrods
 ) 
 {
+    INT8 kwd_size = kwds.size();
+    INT8 rep_size = rep.size();
+
+
     string line;
         bool seenQuote = false;
         bool previousNumRejected = false;
@@ -127,59 +133,119 @@ void check_line(
     }
 }
 
+#include <filesystem>
+#include <pwd.h>
+#include <unistd.h>
+
+string get_home_dir() {
+    char* home;
+    if ( (home = getenv("HOME")) == NULL) {
+        home = getpwuid(getuid())->pw_dir;
+    }
+    return home;
+}
+
 
 int main(int argc, char *argv[]) {
-    string rep[][3] = {
-        {"'",  "'",  colors::GREEN}, // Quote '
-        {"\"", "\"", colors::GREEN}, // Quote ""
-        {"/*", "*/", colors::GREY},   // Comment
-        {"//", "\n", colors::GREY}
-    };
-    
     string symbols[][2] = {
-        {".", colors::YELLOW},
-        {"(", colors::WHITE},
-        {")", colors::WHITE},
-        {"[", colors::WHITE},
-        {"]", colors::WHITE},
-        {"}", colors::WHITE},
-        {"{", colors::WHITE},
-        {"<", colors::YELLOW},
-        {">", colors::YELLOW},
-        {";", colors::WHITE},
-        {"++", colors::YELLOW},
-        {"!", colors::YELLOW},
-
-        {"+=", colors::YELLOW},
-        {"-=", colors::YELLOW},
-        {"/=", colors::YELLOW},
-        {"*=", colors::YELLOW},
-
-        {"=", colors::YELLOW},
-        {"-", colors::WHITE},
-        {"+", colors::WHITE},
-        {"/", colors::WHITE},
-        {"*", colors::WHITE},
-        {"&", colors::YELLOW},
-        {"|", colors::YELLOW},
-        {"^", colors::YELLOW},
+        {".", colors::YELLOW},  {"(", colors::WHITE},   {")", colors::WHITE}, 
+        {"[", colors::WHITE},   {"]", colors::WHITE},   {"}", colors::WHITE},
+        {"{", colors::WHITE},   {"<", colors::YELLOW},  {">", colors::YELLOW}, 
+        {";", colors::WHITE},   {"++", colors::YELLOW}, {"!", colors::YELLOW},    
+        {"+=", colors::YELLOW}, {"-=", colors::YELLOW}, {"/=", colors::YELLOW},
+        {"*=", colors::YELLOW}, {"=", colors::YELLOW},  {"-", colors::WHITE}, 
+        {"+", colors::WHITE},   {"/", colors::WHITE},   {"*", colors::WHITE},
+        {"&", colors::YELLOW},  {"|", colors::YELLOW},  {"^", colors::YELLOW},
     };
-
-
-    if (argc <= 1) {
-        ERROR("No file specified");
-        exit(EXIT_FAILURE);
-    }
+    const string storage_path = get_home_dir() + "/.config/scat/";
+    DB database(storage_path + "sources.sqlite3");
     
-    std::string path = (std::string)argv[1];
-    std::ifstream file;
-    file.open(path);
-
-    if (!file.is_open()) {
-        char *err = strerror(errno);
-        ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
+    if (!database.isOpen()) {
+        auto dir = std::filesystem::create_directories(storage_path);
+        database.connect(database.getPath());
+        if (!database.isOpen()) {
+            ERROR("Could not load sqlite3 db on path \"" + storage_path + "\"");
+            exit(EXIT_FAILURE);
+        }
     }
 
-    check_line(file, rep, 4, kwds, 45, symbols, 24);
-    return 0;
+
+    switch (argc)
+    {
+        case 0:
+        case 1: 
+        {
+            ERROR("No file or arguments specified");
+            exit(EXIT_FAILURE);
+            break;
+        }
+        case 2:
+        {
+            string path = (std::string)argv[1];
+            string file_ext = findExtension(path);
+            get_kwds(database, file_ext);
+
+            std::ifstream file;
+            file.open(path);
+
+            if (!file.is_open()) {
+                char *err = strerror(errno);
+                ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
+                exit(EXIT_FAILURE);
+            }
+
+            check_line(file, cs::REP_KWDS, cs::KEYWORDS, symbols, 24);
+            break;
+        }
+        case 3:
+        {   
+            std::string option = (std::string)argv[1];
+            std::string path = (std::string)argv[2];
+
+
+            if (option == "--parse") {
+                langData data = parse_file(path);
+                printKwds(data);
+            }
+            else if (option == "--default") {
+                langData data = parse_file(path);
+                data.file_extension = ".default";
+                KWD_ID id_data = createLang(database, data);
+                createLangKwdConenctions(database, id_data);
+            }
+            break;
+        }
+        case 4:
+        {
+            string option0 = (string)argv[1];
+            string option1 = (string)argv[2];
+            string path =    (string)argv[3];
+            if (option0 != "--parse")
+            {
+                ERROR("Unrecognised 1st argument \"" + option0 + "\"" + ", must be \"--parse\"");
+                exit(EXIT_FAILURE);
+            }
+            if (option1 != "--save")
+            {
+                ERROR("Unrecognised 2nd argument \"" + option1 + "\", must be \"" + "--save\"");
+                exit(EXIT_FAILURE);
+            }
+            langData data = parse_file(path);
+            printKwds(data);
+            string *a = new string;
+            std::cout << "Save into SQLite3 database, Y or N: ";
+            std::cin >> *a;
+            if (*a != "Y")
+                exit(EXIT_FAILURE);
+            delete a;
+            KWD_ID id_data = createLang(database, data);
+            createLangKwdConenctions(database, id_data);
+            break;
+        }
+        default:
+            ERROR("Too many arguments (" + std::to_string(argc) + ")");
+            exit(EXIT_FAILURE);
+            break;
+    }
+    return EXIT_SUCCESS;
 }
