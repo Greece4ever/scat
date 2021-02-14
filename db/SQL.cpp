@@ -95,32 +95,6 @@ class DB
         }
 };
 
-int callbackID(void *NotUsed, int count, char **data, char **columns) {
-    int ID = std::stoi(data[0]);
-    std::cout << "ID is " << ID << "\n"; 
-    return ID;
-}
-
-class KWD {
-    public:
-        int* ID      = new int;
-        string* name = new string;
-        int* color   = new int;
-
-        KWD(int ID, string NAME, int COLOR) {
-            *this->ID    = ID;
-            *this->name  = NAME;
-            *this->color = COLOR;
-        };
-
-        ~KWD() {
-            std::cout << "Destructor\n";
-            delete ID;
-            delete color;
-            delete name;
-        }
-
-};
 
 string insertAndGetID(DB& database, string kwd, string color) {
     bool inserted = database.insert("KWD", {kwd, color}, false);
@@ -140,6 +114,7 @@ string insertAndGetID(DB& database, string kwd, string color) {
     database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
     return cs::data[0];
 }
+
 
 string insertSymbolAndGetId(DB& database, string STARTING_KEYWORD, string ENDING_KEYWORD, string color)
 {
@@ -165,7 +140,16 @@ string insertSymbolAndGetId(DB& database, string STARTING_KEYWORD, string ENDING
     return cs::data[0];
 }
 
-void createLang(DB& database, langData data) {
+
+typedef struct
+{
+    string LANG_ID;
+    vector<string> KEYWORD_IDS;
+    vector<string> SYMBOL_IDS;
+} KWD_ID;
+
+
+KWD_ID createLang(DB& database, langData data) {
     escapeSQL(data.file_extension);
     bool inserted =  database.insert("LANG", {data.file_extension}, false);
     if (!inserted) {
@@ -197,27 +181,52 @@ void createLang(DB& database, langData data) {
         SYMBOL_IDS.push_back(  insertSymbolAndGetId(database, start_kwd, endng_kwd, color)  );
     }
 
-
-    // for (int i=0; i < KEYWORD_IDS.size(); i++) {
-    //     std::cout << "KEYWORD ID -> " << KEYWORD_IDS[i] << "\n";
-    // }
-
-    // for (int i=0; i < SYMBOL_IDS.size(); i++) {
-    //     std::cout << "SYMBOL ID -> " << SYMBOL_IDS[i] << "\n";
-    // }
-
+    KWD_ID id_data;
+    id_data.KEYWORD_IDS = KEYWORD_IDS;
+    id_data.SYMBOL_IDS = SYMBOL_IDS;
+    id_data.LANG_ID = langID;
+    return id_data;
 
 }
 
 
+void createLangKwdConenctions(DB& database, KWD_ID id_data) {
+    for (int i=0; i < id_data.KEYWORD_IDS.size(); i++) {
+        string SQL_INSERT = R"sql(
+            INSERT INTO LANG_KWD 
+            VALUES (NULL, $1, $2)
+        )sql";
+
+        replaceOne(SQL_INSERT, "$1", id_data.LANG_ID);
+        replaceOne(SQL_INSERT, "$2", id_data.KEYWORD_IDS[i]);
+
+        database.execute(SQL_INSERT, true);
+    }
+
+    for (int i=0; i < id_data.SYMBOL_IDS.size(); i++) {
+        string SQL_INSERT = R"sql(
+            INSERT INTO LANG_RPT 
+            VALUES (NULL, $1, $2)
+        )sql";
+
+        replaceOne(SQL_INSERT, "$1", id_data.LANG_ID);
+        replaceOne(SQL_INSERT, "$2", id_data.SYMBOL_IDS[i]);
+        database.execute(SQL_INSERT, true);
+    }
+}
+
 int main() {    
     DB database("KEYWORDS.sqlite3");
     SQL_INIT();
+
     database.execute(CREATE_COLLUMNS);
+    database.execute(ManyToMany);
+    database.commit();
 
     langData data = parse_file("./cpp.lang");
-    printKwds(data);
-    createLang(database, data);
+    // printKwds(data);
+    KWD_ID id_data = createLang(database, data);
+    createLangKwdConenctions(database, id_data);
 
 
     return EXIT_SUCCESS;

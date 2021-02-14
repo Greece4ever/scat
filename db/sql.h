@@ -2,12 +2,6 @@
     #include <string>
 #endif
 
-std::string KWD_STRUCT = R"sql(
-    "ID"      INT PRIMARY KEY,
-    "KEYWORD" TEXT NOT NULL,
-    "COLOR"   INT NOT NULL,
-    CONSTRAINT unq UNIQUE ("KEYWORD", "COLOR")        
-)sql";
 
 std::string LangManyToMany = R"sql(
     "ID"    INT PRIMARY KEY,
@@ -17,7 +11,11 @@ std::string LangManyToMany = R"sql(
 std::string CREATE_COLLUMNS = R"sql(
     -- Fully matched keywords (fully matched words) with certain color
     CREATE TABLE IF NOT EXISTS KWD(
-        %STRUCT
+        "ID"      INT PRIMARY KEY,
+        "KEYWORD" TEXT NOT NULL,
+        "COLOR"   INT NOT NULL,
+        CONSTRAINT unq UNIQUE ("KEYWORD", "COLOR")        
+
     );
 
     -- Repeating chars (waiting for something to end like comment with "\n")
@@ -29,10 +27,6 @@ std::string CREATE_COLLUMNS = R"sql(
         CONSTRAINT unq UNIQUE ("STARTING_KEYWORD", "ENDING_KEYWORD", "COLOR")        
     );
 
-    -- Symbols that do not need to be fullmatched (e.g "+", "-" etc)
-    CREATE TABLE IF NOT EXISTS SMB(
-        %STRUCT
-    );
 
     -- Language with many keywords with colors
     CREATE TABLE IF NOT EXISTS LANG(
@@ -53,20 +47,16 @@ std::string CREATE_COLLUMNS = R"sql(
 std::string ManyToMany = R"sql(
     CREATE TABLE IF NOT EXISTS LANG_KWD(
       %MANY_TO_MANY
-      "KWD"   REFERENCES KWD( ID )
+      "KWD"   REFERENCES KWD( ID ),
+      CONSTRAINT unq UNIQUE ("LANG", "KWD")
     );
 
 
     CREATE TABLE IF NOT EXISTS LANG_RPT(
       %MANY_TO_MANY
-      "RPT"   REFERENCES RPT( ID )
-    );
-
-
-    CREATE TABLE IF NOT EXISTS LANG_SMB(
-      %MANY_TO_MANY
-      "SMB"   REFERENCES SMB( ID )
-    );
+      "RPT"   REFERENCES RPT( ID ),
+      CONSTRAINT unq UNIQUE ("LANG", "RPT")
+    );    
 )sql";
 
 void replaceAll(std::string& str, const std::string& from, const std::string& to) {
@@ -87,8 +77,7 @@ void replaceOne(std::string& str, std::string from, std::string to) {
 }
 
 void SQL_INIT() {
-    replaceAll(CREATE_COLLUMNS, "%STRUCT", KWD_STRUCT);
-    replaceAll(ManyToMany, "%STRUCT", LangManyToMany);
+    replaceAll(ManyToMany, "%MANY_TO_MANY", LangManyToMany);
 }
 
 void escapeChar(std::string& sql_statement, std::string chr, std::string escaped) {
