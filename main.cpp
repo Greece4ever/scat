@@ -153,14 +153,14 @@ int main(int argc, char *argv[]) {
         {"-", colors::YELLOW},   {"*", colors::YELLOW},   {"/", colors::YELLOW},
         {"&",  colors::YELLOW},  {"|",  colors::YELLOW},  {"^",  colors::YELLOW},
 
-        {"%", colors::YELLOW},   {"~", colors::YELLOW},  {".",  colors::YELLOW},  
-        {"(",  colors::BOLD},   {")",  colors::BOLD},  {"=",  colors::YELLOW},
+        {"%", colors::YELLOW},   {"~", colors::YELLOW},   {".",  colors::YELLOW},  
+        {"(",  colors::BOLD},    {")",  colors::BOLD},    {"=",  colors::YELLOW},
         
         {"[",  colors::WHITE},   {"]",  colors::WHITE}, {":",  colors::YELLOW},
-        {"{",  colors::WHITE},   {"}",  colors::WHITE},
+        {"{",  colors::WHITE},   {"}",  colors::WHITE}, 
         {"<",  colors::YELLOW},  {">",  colors::YELLOW}, 
 
-        {";",  colors::WHITE},   {"++", colors::YELLOW},  {"!",  colors::YELLOW},            
+        {";",  colors::WHITE},   {"+", colors::YELLOW},  {"!",  colors::YELLOW},            
     };
 
     const int SYMBOL_SIZE = sizeof(symbols) / sizeof(symbols[0]);    

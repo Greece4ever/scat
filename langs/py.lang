@@ -1,0 +1,54 @@
+.py
+
+KWD:
+    False      BLUE     
+    None       BLUE     
+    True       BLUE     
+    and        BLUE 
+    as         PURPLE 
+    assert     PURPLE     
+    async      PURPLE     
+    await      PURPLE     
+    break      PURPLE     
+    class      BLUE     
+    continue   PURPLE   
+    def        BLUE 
+    del        PURPLE 
+    elif       PURPLE     
+    else       PURPLE     
+    except     PURPLE     
+    finally    PURPLE     
+    for        PURPLE 
+    from       PURPLE     
+    global     BLUE     
+    if         PURPLE 
+    import     PURPLE     
+    in         PURPLE 
+    is         BLUE 
+    lambda     BLUE     
+    nonlocal   BLUE         
+    not        BLUE 
+    or         BLUE 
+    pass       PURPLE     
+    raise      PURPLE     
+    return     PURPLE     
+    try        PURPLE 
+    while      PURPLE     
+    with       PURPLE     
+    yield      PURPLE
+    list       RED
+    tuple      RED
+    set        RED
+    dict       RED
+    print      YELLOW
+    range      YELLOW
+    int        BLUE
+    float      BLUE
+    bool       BLUE
+    complex    BLUE
+REP:
+    #       \n       GREY
+    """     """     GREEN
+    "       "       GREEN
+    '       '       GREEN    
+    @       \n      BLUE

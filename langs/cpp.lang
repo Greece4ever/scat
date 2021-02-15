@@ -1,0 +1,103 @@
+.cpp
+
+KWD:
+    alignas BLUE
+    alignof BLUE
+    and     BLUE
+    and_eq  BLUE
+    asm     PURPLE
+    atomic_cancel   BLUE
+    atomic_commit   BLUE
+    atomic_noexcept BLUE
+    auto    BLUE
+    bitand  BLUE
+    bitor   BLUE
+    bool    BLUE
+    break   PURPLE
+    case    PURPLE
+    catch   PURPLE
+    char    BLUE
+    char8_t  BLUE
+    char16_t BLUE
+    char32_t BLUE
+    class   BLUE
+    compl   BLUE
+    concept BLUE
+    const     BLUE
+    consteval BLUE
+    constexpr BLUE
+    constinit BLUE
+    const_cast  BLUE
+    continue PURPLE
+    co_await PURPLE
+    co_return PURPLE 
+    co_yield PURPLE
+    decltype BLUE
+    default BLUE
+    delete  PURPLE
+    do      PURPLE
+    double  BLUE
+    dynamic_cast BLUE
+    else    PURPLE
+    enum     BLUE
+    explicit BLUE
+    export  PURPLE
+    extern  BLUE
+    false   BLUE
+    float   BLUE
+    for     PURPLE
+    friend  BLUE
+    goto    BLUE
+    if      PURPLE
+    inline  blue
+    int     blue
+    long    blue
+    mutable blue
+    namespace blue
+    new       PURPLE
+    noexcept        BLUE
+    not             BLUE
+    not_eq          BLUE
+    nullptr         BLUE
+    operator        BLUE
+    or              BLUE
+    or_eq           BLUE
+    private         BLUE
+    protected       BLUE
+    public          BLUE
+    reflexpr        BLUE
+    register            BLUE
+    reinterpret_cast    YELLOW 
+    requires        PURPLE
+    return          purple
+    short           BLUE
+    signed          BLUE
+    sizeof          BLUE
+    std             RED
+    static          BLUE
+    static_assert   YELLOW
+    static_cast     YELLOW
+    struct          BLUE
+    switch          PURPLE
+    synchronized    BLUE
+    template        YELLOW
+    this            BLUE
+    throw           PURPLE
+    true            BLUE
+    try             PURPLE
+    typedef         BLUE
+    typeid          blue
+    typename        BLUE
+    union           BLUE
+    unsigned        BLUE
+    using           PURPLE
+    virtual         BLUE
+    void            BLUE
+    volatile        BLUE
+    while           PURPLE
+REP:
+    //  \n  GREY
+    #   \n  YELLOW
+    /* */   GREY
+    "   "   GREEN
+    '   '   GREEN

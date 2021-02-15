@@ -1,7 +1,10 @@
 *
+!install.sh
 !.gitignore
 !*.cpp
 !*.h
 !*.hpp
 !/parsing
 !/db
+!/langs
+!*.lang
