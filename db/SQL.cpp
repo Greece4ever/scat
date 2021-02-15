@@ -121,8 +121,8 @@ class DB
                 return false;
             string sterr = err_msg;
             string err = toUpper(sterr);
-            int found = err.find("no such table:");
-            return found == -1;
+            int found = err.find("NO SUCH TABLE:");
+            return found != -1;
         }
 
         bool execute(std::string sql_comamnd, 
@@ -236,13 +236,14 @@ typedef struct
 
 KWD_ID createLang(DB& database, langData data) {
     // escapeSQL(data.file_extension);
-    bool inserted =  database.insert("LANG", {data.file_extension}, true);
+    bool inserted =  database.insert("LANG", {data.file_extension}, false);
     if (!inserted) {
-        std::cout << "no inserted\n";
         if (database.isNoSuchTableError()) {
             init_dbs(database);
             return createLang(database, data);
         }
+        WARNING("Language \"" + data.file_extension + "\" already exists, this will add even more keywords");
+        WARNING("if you wish to insert tottaly new ones, delete it");
 
         string QUERY = R"sql(
             SELECT "rowid" FROM LANG
@@ -293,7 +294,7 @@ void createLangKwdConenctions(DB& database, KWD_ID id_data) {
         replaceOne(SQL_INSERT, "$1", id_data.LANG_ID);
         replaceOne(SQL_INSERT, "$2", id_data.KEYWORD_IDS[i]);
 
-        database.execute(SQL_INSERT, true);
+        database.execute(SQL_INSERT, false);
     }
 
     for (int i=0; i < id_data.SYMBOL_IDS.size(); i++) {
@@ -304,7 +305,7 @@ void createLangKwdConenctions(DB& database, KWD_ID id_data) {
 
         replaceOne(SQL_INSERT, "$1", id_data.LANG_ID);
         replaceOne(SQL_INSERT, "$2", id_data.SYMBOL_IDS[i]);
-        database.execute(SQL_INSERT, true);
+        database.execute(SQL_INSERT, false); // Note errors are pointless -> database.execute(SQL_INSERT, true);
     }
 }
 
@@ -343,7 +344,7 @@ void get_kwds(DB& database, string language, string language0="")
     
     if(database.isNoSuchTableError()) {
         init_dbs(database);
-        ERROR("No Default keyword colorset found, exiting");
+        ERROR("No Default keyword colorset found, exiting. (DB initialised for the first time)");
         exit(EXIT_FAILURE);
         return get_kwds(database, language);
     }
@@ -396,6 +397,48 @@ void get_kwds(DB& database, string language, string language0="")
 }
 
 
+void deleteLang(DB& database, string language) {
+    string query;
+    query = R"sql(
+        SELECT "rowid" FROM LANG
+        WHERE LANG.NAME="$1";
+    )sql";
+
+    escapeSQL(language);
+    replaceOne(query, "$1", language);
+    database.execute(query, true, cs::insertCallback);
+    
+    if (cs::data.size() == 0) {
+        ERROR("Language \"" + language + "\" not found.");
+        exit(EXIT_FAILURE);
+    }
+
+    string langID = cs::data[0];
+
+    string(R"sql(
+        DELETE FROM LANG_KWD
+        WHERE LANG_KWD.LANG=$1
+    )sql").swap( query );
+
+    replaceOne(query, "$1", langID);
+    database.execute( query  );
+
+    string(R"sql(
+        DELETE FROM LANG_RPT
+        WHERE LANG_RPT.LANG=$1
+    )sql").swap( query );
+
+    replaceOne(query, "$1", langID);
+    database.execute( query );
+
+    string(R"sql(
+        DELETE FROM LANG
+        WHERE LANG.NAME="$1"
+    )sql").swap( query );
+
+    replaceOne(query, "$1", language);
+    database.execute(  query );
+}
 
 
 #ifndef ___MAIN___

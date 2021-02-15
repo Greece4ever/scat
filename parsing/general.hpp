@@ -8,6 +8,8 @@
     using std::string;
 #endif
 
+// _ ()
+
 bool fullMatch(string& str, string target, short index) {
     if (index != 0) {
     
@@ -24,7 +26,7 @@ bool fullMatch(string& str, string target, short index) {
             return false;
         j++;
     }
-    if (isalpha(str[i]) || isdigit(str[i])) { /* TODO UTF-8 CHARS */
+    if (isalpha(str[i]) || isdigit(str[i]) || str[i] == '_' ) { /* TODO UTF-8 CHARS */
         return false;
     }
     // std::cout << "passed word end test" << "\n";

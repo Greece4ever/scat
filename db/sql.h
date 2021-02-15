@@ -96,7 +96,8 @@ void escapeChar(std::string& sql_statement, std::string chr, std::string escaped
 const unsigned char es_char_count = 11; 
 
 void escapeSQL(std::string& sql_str) {
-    escapeChar(sql_str, "'", "''");
+    // if inserting with double quotes(") only single(') quotes have to be duplicated
+    // escapeChar(sql_str, "'", "''"); 
     escapeChar(sql_str, "\"", "\"\"");
     // escapeChar(sql_str, "\\", "\\\\");
 }

@@ -11,6 +11,7 @@ using std::string;
 #include <fstream>
 
 #define ERROR(x) std::cerr << colors::RED << "[Error] " << colors::ENDC << x << "\n"
+#define WARNING(x) std::cerr << colors::YELLOW << "[Warning] " << colors::ENDC << x << "\n"
 // #include "./cnfg.cpp"
 
 #include "./parsing/number.hpp"
@@ -111,7 +112,8 @@ void check_line(
                     goto end;
                 }
             }
-
+            
+            // Symbols (+, -)
             for (INT8 j=0; j < smbl_size; j++)
             {
                 if (checkSymbol(line, smbls[j][0], i)) {
@@ -148,18 +150,25 @@ string get_home_dir() {
 
 int main(int argc, char *argv[]) {
     string symbols[][2] = {
-        {".", colors::YELLOW},  {"(", colors::WHITE},   {")", colors::WHITE}, 
-        {"[", colors::WHITE},   {"]", colors::WHITE},   {"}", colors::WHITE},
-        {"{", colors::WHITE},   {"<", colors::YELLOW},  {">", colors::YELLOW}, 
-        {";", colors::WHITE},   {"++", colors::YELLOW}, {"!", colors::YELLOW},    
-        {"+=", colors::YELLOW}, {"-=", colors::YELLOW}, {"/=", colors::YELLOW},
-        {"*=", colors::YELLOW}, {"=", colors::YELLOW},  {"-", colors::WHITE}, 
-        {"+", colors::WHITE},   {"/", colors::WHITE},   {"*", colors::WHITE},
-        {"&", colors::YELLOW},  {"|", colors::YELLOW},  {"^", colors::YELLOW},
+        {"-", colors::YELLOW},   {"*", colors::YELLOW},   {"/", colors::YELLOW},
+        {"&",  colors::YELLOW},  {"|",  colors::YELLOW},  {"^",  colors::YELLOW},
+
+        {"%", colors::YELLOW},   {"~", colors::YELLOW},  {".",  colors::YELLOW},  
+        {"(",  colors::BOLD},   {")",  colors::BOLD},  {"=",  colors::YELLOW},
+        
+        {"[",  colors::WHITE},   {"]",  colors::WHITE}, {":",  colors::YELLOW},
+        {"{",  colors::WHITE},   {"}",  colors::WHITE},
+        {"<",  colors::YELLOW},  {">",  colors::YELLOW}, 
+
+        {";",  colors::WHITE},   {"++", colors::YELLOW},  {"!",  colors::YELLOW},            
     };
+
+    const int SYMBOL_SIZE = sizeof(symbols) / sizeof(symbols[0]);    
+
     const string storage_path = get_home_dir() + "/.config/scat/";
     DB database(storage_path + "sources.sqlite3");
-    
+
+
     if (!database.isOpen()) {
         auto dir = std::filesystem::create_directories(storage_path);
         database.connect(database.getPath());
@@ -193,8 +202,8 @@ int main(int argc, char *argv[]) {
                 ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
                 exit(EXIT_FAILURE);
             }
-
-            check_line(file, cs::REP_KWDS, cs::KEYWORDS, symbols, 24);
+            // Here it is 
+            check_line(file, cs::REP_KWDS, cs::KEYWORDS, symbols, SYMBOL_SIZE);
             break;
         }
         case 3:
@@ -213,6 +222,9 @@ int main(int argc, char *argv[]) {
                 KWD_ID id_data = createLang(database, data);
                 createLangKwdConenctions(database, id_data);
             }
+            else if (option == "--delete") {
+                deleteLang(database, path);
+            }   
             break;
         }
         case 4:
