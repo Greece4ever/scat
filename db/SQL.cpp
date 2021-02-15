@@ -323,6 +323,17 @@ string VecToString(vector<string>& vect) {
     return arr;
 }
 
+
+void getLangPtr(DB& database, string lang) {
+    string query = R"sql(
+        SELECT "LANG_ID" FROM LANG_PTR
+        WHERE LANG_PTR.NAME="$1";
+    )sql";
+    replaceOne(query, "$1", lang);
+    database.execute(query, true, cs::callback);
+}
+
+
 /* Set the value of
     cs::KEYWORDS and
     cs::REP_KWDS
@@ -350,12 +361,16 @@ void get_kwds(DB& database, string language, string language0="")
     }
 
     if (cs::data.size() == 0) {
-        if (language == ".default") {
-            ERROR("Language \"" + language0 + "\" not found and no default was set.");
-            ERROR("A default can be set by running --default and then the path.");
-            exit(EXIT_FAILURE);
+        getLangPtr(database, language);
+        if (cs::data.size() == 0) 
+        {
+            if (language == ".default") {
+                ERROR("Language \"" + language0 + "\" not found and no default was set.");
+                ERROR("A default can be set by running --default and then the path.");
+                exit(EXIT_FAILURE);
+            }
+            return get_kwds(database, ".default", language); // Return the default language
         }
-        return get_kwds(database, ".default", language); // Return the default language
     }
     string langID = cs::data[0];
 
@@ -396,7 +411,7 @@ void get_kwds(DB& database, string language, string language0="")
     database.execute(FQUERY3, true, cs::RptKwdInsertionCallback);
 }
 
-
+// Delete a language
 void deleteLang(DB& database, string language) {
     string query;
     query = R"sql(
@@ -440,6 +455,36 @@ void deleteLang(DB& database, string language) {
     database.execute(  query );
 }
 
+
+void createLangPointer(DB& database, string langFrom, string langTo) {
+    string query = R"sql(
+        SELECT "rowid" FROM LANG
+        WHERE LANG.NAME="$1"
+    )sql";
+
+    escapeSQL(langFrom);
+    escapeSQL(langTo);
+
+    replaceOne(query, "$1", langFrom);
+    
+    database.execute(query, true, cs::insertCallback);
+    if (cs::data.size() == 0) {
+        ERROR("No language named \"" + langFrom + "\" found.");
+        exit(EXIT_FAILURE);
+    }
+
+    string langFromID = cs::data[0];
+
+    string(R"sql(
+        INSERT INTO LANG_PTR
+        VALUES (NULL, "$2", $1);
+    )sql").swap(query);
+
+    replaceOne(query, "$1", langFromID);
+    replaceOne(query, "$2", langTo);
+
+    database.execute(query);
+}
 
 #ifndef ___MAIN___
     int main() {    

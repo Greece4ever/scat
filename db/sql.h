@@ -39,7 +39,8 @@ std::string CREATE_COLLUMNS = R"sql(
     CREATE TABLE IF NOT EXISTS LANG_PTR(
         "ID"       INT PRIMARY KEY,
         "NAME"     TEXT UNIQUE NOT NULL,
-        "LANG_ID"  REFERENCES LANG(ID)
+        "LANG_ID"  REFERENCES LANG(ID),
+        CONSTRAINT unq UNIQUE ("NAME", "LANG_ID")
     );  
 )sql";
 

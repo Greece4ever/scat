@@ -168,7 +168,6 @@ int main(int argc, char *argv[]) {
     const string storage_path = get_home_dir() + "/.config/scat/";
     DB database(storage_path + "sources.sqlite3");
 
-
     if (!database.isOpen()) {
         auto dir = std::filesystem::create_directories(storage_path);
         database.connect(database.getPath());
@@ -177,7 +176,6 @@ int main(int argc, char *argv[]) {
             exit(EXIT_FAILURE);
         }
     }
-
 
     switch (argc)
     {
@@ -222,6 +220,13 @@ int main(int argc, char *argv[]) {
                 KWD_ID id_data = createLang(database, data);
                 createLangKwdConenctions(database, id_data);
             }
+            else if (option == "--save") {
+                langData data = parse_file(path);
+                KWD_ID id_data = createLang(database, data);
+                createLangKwdConenctions(database, id_data);
+
+            }
+
             else if (option == "--delete") {
                 deleteLang(database, path);
             }   
@@ -232,6 +237,11 @@ int main(int argc, char *argv[]) {
             string option0 = (string)argv[1];
             string option1 = (string)argv[2];
             string path =    (string)argv[3];
+            if (option0 == "--create_ptr") {
+                createLangPointer(database, option1, path);
+                break;
+            }
+
             if (option0 != "--parse")
             {
                 ERROR("Unrecognised 1st argument \"" + option0 + "\"" + ", must be \"--parse\"");
