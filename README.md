@@ -13,16 +13,16 @@ Very simple **linux** command-line utility to print files with syntax highlighti
 The source can be built with a verison of`g++` that supports `c++17`. The default that comes 
 with `apt-get` should be fine.
 
-```
+```sh
 sudo apt install g++
 ```
 aditionally the `sqlite3` library files are required
-```
+```sh
 sudo apt-get install libsqlite3-dev
 ```
 then you can clone and execute the `install.sh` script which does some minor configurations
 
-```
+```sh
 git clone https://github.com/Greece4ever/scat.git
 cd scat
 . ./install.sh
@@ -30,7 +30,7 @@ cd scat
 Then, if everything goes right, there should be an executable in the same directory called `scat`.
 
 Optionaly you can then move it to `/usr/bin`
-```
+```sh
 sudo mv scat /usr/bin
 ```
 ### 2. Installing built binary (Alternative)
