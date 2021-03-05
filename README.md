@@ -31,7 +31,7 @@ Then, if everything goes right, there should be an executable in the same direct
 
 Optionaly you can then move it to `/usr/bin`
 ```sh
-sudo mv scat /usr/bin
+sudo mv scat /usr/bin # or better /usr/local/bin
 ```
 ### 2. Installing built binary (Alternative)
 
@@ -47,8 +47,10 @@ Then execute the `install.sh` script
 # cd scat # you may have to do this if you install via browser
 cd build 
 . ./install.sh
-sudo mv ./scat /usr/bin # Optional
+sudo mv ./scat /usr/bin # or /usr/local/bin
 ```
+if you've moved to `/usr/bin/` or `/usr/local/bin` You can safely remove the source files with `cd .. && rm -rf ./scat`.
+
 # Usage
 Assuming you've run the install script and everything went smoothly.
 ```sh
