@@ -19,12 +19,17 @@ using std::string;
 
 #include <string.h>
 #define ___MAIN___ 0xFFFF
+int a = 0;
+
+#define f(x) std::cout << "DEBUG " << __LINE__ << "\n";
+
 #include "./db/SQL.cpp"
 
-// a2 216
-// Α2 ΣΕΛΙΔΑ 216
-// b1 b2, 255
-// 221 ekthesi
+typedef unsigned int uint;
+
+using std::array;
+using std::tuple;
+
 
 void printDelimiter(std::string& delimeter, INT16& index) {
     std::cout << delimeter[0];
@@ -36,18 +41,24 @@ void printDelimiter(std::string& delimeter, INT16& index) {
 }
 
 
-void awaitQuote(bool& seenQuote, std::string& line, std::string& endDelimeter, INT16& index) {
+void awaitQuote(bool& seenQuote, std::string& line, std::vector<string>* endDelimeter, INT16& index, bool& include_str) {
     /* Function-handler for when waiting for a missing quote (") */
+
     if (seenQuote) {
-        if (checkSymbol(line, endDelimeter, index))  // if End delimeter is found
-        {
-            printDelimiter(endDelimeter, index);
-            DEACTIVATE();
-            seenQuote = false;
+        for (uint i=0; i < endDelimeter->size(); i++)
+        {   
+            if (checkSymbol(line, endDelimeter->at(i), index))  // if End delimeter is found
+            {
+                if (!include_str)
+                    DEACTIVATE();
+                printDelimiter(endDelimeter->at(i), index);
+                DEACTIVATE();
+                seenQuote = false;
+                include_str = true;
+                return;
+            }
         }
-        else { // end delimeter not found
-            std::cout << line[index];
-        }
+        std::cout << line[index];
     }
 }
 
@@ -63,62 +74,98 @@ void handleDigit(std::string& line, INT16& i, bool& previousNumRejected) {
     }
 }
 
+// { "def", colors::YELLOW, "(", colors::YELLOW }
 
+template<typename string_stream>
 void check_line(
-    std::ifstream&     file_handler, 
-    vector<std::array<string, 3>> rep,   // INT8 rep_size, // Quotes, comments
-    vector<std::array<string, 2>>      kwds,  // INT8 kwd_size, // Keywords
-    string smbls[][2], INT8 smbl_size // Symbols may not be full matches like keywrods
+    string_stream& file_handler, 
+    vector<std::array<string, 2>> kwds={},     // INT8 kwd_size, // Keywords
+    vector< tuple<string, vector<string>, string> > rep={},      // Quotes, comments (need an end delimeter)
+    vector< 
+        tuple<array<string, 2>,// (START, END) color
+             string,           // START KEYWORD
+             vector<string>>   // END KEYWORDS
+    > kwds_cont={},
+    vector<array<string, 2>> smbls={} // Symbols may not be full matches like keywrods
 ) 
 {
     INT8 kwd_size = kwds.size();
     INT8 rep_size = rep.size();
 
-
     string line;
         bool seenQuote = false;
         bool previousNumRejected = false;
-    string endDelimiter;
+
+    std::vector<string>* endDelimiter = nullptr;
+
+    unsigned int line_count = 0;
+    bool include_str = true;
+
     while(getline(file_handler, line)) 
     {
+        line_count++;
         line.push_back('\n');
+
         for (INT16 i=0; i < line.size(); i++) // each letter
         {
             if (seenQuote) {
-                awaitQuote(seenQuote, line,endDelimiter, i);
+                awaitQuote(seenQuote, line, endDelimiter, i, include_str);
                 continue;
             }
 
             // Check for quotes, comments, etc
             for (INT8 j=0; j < rep_size; j++)
             {
-                if (checkSymbol(line, rep[j][0], i)) 
+                std::string& keyword = std::get<0>(rep[j]);
+
+                if (checkSymbol(line, keyword, i)) 
                 {
-                    seenQuote = true;
-                    endDelimiter = rep[j][1]; // End of quote (eg /* end is */)
-                    ACTIVATE(rep[j][2]);
-                    printDelimiter(rep[j][0], i);  
+                    seenQuote    = true;
+                    endDelimiter = &std::get<1>(rep[j]); // End of quote (eg /* end is */)
+                    ACTIVATE( std::get<2>(rep[j])  );
+                        printDelimiter(keyword, i);  
                     goto end;                  
                 }
             } 
+
+            
+
+            for (INT8 j=0; j < kwds_cont.size(); j++) {
+                std::string& keyword        = std::get<1>(kwds_cont[j]);
+                std::string& kwd_color      = std::get<0>(kwds_cont[j])[0];
+                std::string& next_color     = std::get<0>(kwds_cont[j])[1];
+
+
+                if (fullMatch(line, keyword, i)) {
+                    ACTIVATE( kwd_color );
+                        printDelimiter(keyword, i);
+                    DEACTIVATE();
+                    ACTIVATE( next_color );
+                        include_str = false;
+                        seenQuote = true;
+                        endDelimiter = &(std::get<2>(kwds_cont[j]));
+                    goto end;
+                }
+            }
+
 
             // Check for all keywords
             for (INT8 j=0; j < kwd_size; j++)
             {
                 if (fullMatch(line, kwds[j][0], i)) {
                     ACTIVATE(kwds[j][1]);
-                    printDelimiter(kwds[j][0], i);
+                        printDelimiter(kwds[j][0], i);
                     DEACTIVATE();
                     goto end;
                 }
             }
             
             // Symbols (+, -)
-            for (INT8 j=0; j < smbl_size; j++)
+            for (INT8 j=0; j < smbls.size(); j++)
             {
                 if (checkSymbol(line, smbls[j][0], i)) {
                     ACTIVATE(smbls[j][1]);
-                    printDelimiter(smbls[j][0], i);
+                        printDelimiter(smbls[j][0], i);
                     DEACTIVATE(); // Deactivate color
                     goto end;
                 }
@@ -148,8 +195,9 @@ string get_home_dir() {
 }
 
 
+
 int main(int argc, char *argv[]) {
-    string symbols[][2] = {
+    vector<array<string, 2>> symbols = {
         {"-", colors::YELLOW},   {"*", colors::YELLOW},   {"/", colors::YELLOW},
         {"&",  colors::YELLOW},  {"|",  colors::YELLOW},  {"^",  colors::YELLOW},
 
@@ -163,18 +211,27 @@ int main(int argc, char *argv[]) {
         {";",  colors::WHITE},   {"+", colors::YELLOW},  {"!",  colors::YELLOW},            
     };
 
-    const int SYMBOL_SIZE = sizeof(symbols) / sizeof(symbols[0]);    
 
     const string storage_path = get_home_dir() + "/.config/scat/";
     DB database(storage_path + "sources.sqlite3");
+    // std::cout << storage_path << "\n";
+    // if (!database.isOpen()) {
+        // auto dir = std::filesystem::create_directories(storage_path);
+        // database.connect(database.getPath());
+        // if (!database.isOpen()) {
+            // ERROR("Could not load sqlite3 db on path \"" + storage_path + "\"");
+            // exit(EXIT_FAILURE);
+        // }
+    // }
 
-    if (!database.isOpen()) {
-        auto dir = std::filesystem::create_directories(storage_path);
-        database.connect(database.getPath());
-        if (!database.isOpen()) {
-            ERROR("Could not load sqlite3 db on path \"" + storage_path + "\"");
-            exit(EXIT_FAILURE);
-        }
+    database.execute(R"sql(SELECT rowid FROM KWD_CONT_STRING where rowid="0")sql", false, cs::default_);
+    cs::database = &database;
+
+    if (database.isNoSuchTableError())
+    {
+        std::cout << "nop table\n";
+        database.dropAllTables();
+        init_dbs(database);
     }
 
     switch (argc)
@@ -200,8 +257,9 @@ int main(int argc, char *argv[]) {
                 ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
                 exit(EXIT_FAILURE);
             }
+
             // Here it is 
-            check_line(file, cs::REP_KWDS, cs::KEYWORDS, symbols, SYMBOL_SIZE);
+            check_line(file, cs::KEYWORDS, cs::REP_KWDS, cs::KWDS_CONT, symbols);
             break;
         }
         case 3:
@@ -271,3 +329,12 @@ int main(int argc, char *argv[]) {
     }
     return EXIT_SUCCESS;
 }
+
+/*
+
+function run {
+    g++ $1 -o scat -std=c++17 -l sqlite3 &&
+    ./scat test.py
+}
+
+*/

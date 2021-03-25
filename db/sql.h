@@ -34,7 +34,24 @@ std::string CREATE_COLLUMNS = R"sql(
         "NAME" TEXT UNIQUE NOT NULL
     );
 
-    
+    CREATE TABLE IF NOT EXISTS KWD_CONT(
+        "ID"      INT PRIMARY KEY,
+        "LANG_ID"  REFERENCES LANG(ID),
+        "COLOR0"   INT NOT NULL,
+        "COLOR1"   INT NOT NULL,
+        "STARTING_KEYWORD" TEXT NOT NULL,
+        CONSTRAINT unq UNIQUE   ("LANG_ID", "COLOR0", "COLOR1", "STARTING_KEYWORD")
+    );
+
+
+    CREATE TABLE IF NOT EXISTS KWD_CONT_STRING(
+        "ID" INT PRIMARY KEY,
+        "KWD_CONT_ID" REFERENCES KWD_CONT(ID),
+        "TEXT" TEXT NOT NULL,
+        CONSTRAINT unq UNIQUE ("KWD_CONT_ID", "TEXT")
+    );
+
+
     -- Languages that point to other languages
     CREATE TABLE IF NOT EXISTS LANG_PTR(
         "ID"       INT PRIMARY KEY,
@@ -58,6 +75,13 @@ std::string ManyToMany = R"sql(
       "RPT"   REFERENCES RPT( ID ),
       CONSTRAINT unq UNIQUE ("LANG", "RPT")
     );    
+
+    CREATE TABLE IF NOT EXISTS LANG_KWD_CONT(
+      %MANY_TO_MANY
+      "KWD_CONT"   REFERENCES KWD_CONT( ID ),
+      CONSTRAINT unq UNIQUE ("LANG", "KWD_CONT")
+    );    
+
 )sql";
 
 void replaceAll(std::string& str, const std::string& from, const std::string& to) {

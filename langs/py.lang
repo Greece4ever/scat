@@ -1,5 +1,8 @@
 .py
 
+KWD_CONT:
+    class BLUE YELLOW (, \n, :
+    def   BLUE YELLOW (, \n, :
 KWD:
     False      BLUE     
     None       BLUE     
@@ -10,9 +13,7 @@ KWD:
     async      PURPLE     
     await      PURPLE     
     break      PURPLE     
-    class      BLUE     
     continue   PURPLE   
-    def        BLUE 
     del        PURPLE 
     elif       PURPLE     
     else       PURPLE     
