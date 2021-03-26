@@ -1,12 +1,17 @@
 .js
 
+KWD_CONT:
+    function BLUE YELLOW (, \c, {, }, ), ;
+    class BLUE YELLOW (, \c, {, }, ), ;
+    new PURPLE BLUE (, \c, {, }, ), ;
+    let BLUE YELLOW ;, =, {, }, (, )    
+    const BLUE YELLOW ;, =, {, }, (, )    
+    var BLUE YELLOW ;, =, {, }, (, )    
 KWD:
     await        PURPLE
     break        PURPLE
     case         PURPLE
     catch        PURPLE
-    class        BLUE
-    const        BLUE
     continue     PURPLE
     debugger     PURPLE
     default      PURPLE
@@ -19,15 +24,12 @@ KWD:
     false        BLUE
     finally      PURPLE
     for          PURPLE
-    function     BLUE
     if           PURPLE
     implements   PURPLE
     import       PURPLE
     in           PURPLE
     instanceof   PURPLE
     interface    PURPLE
-    let          BLUE    
-    new          PURPLE
     null         BLUE
     package      PURPLE
     private      BLUE
@@ -42,7 +44,6 @@ KWD:
     try          PURPLE
     true         BLUE
     typeof       BLUE
-    var          BLUE
     void         BLUE
     while        PURPLE
     with         PURPLE

@@ -9,4 +9,6 @@ for i in $(ls ./langs/);
 ./scat --create_ptr .cpp .c
 ./scat --create_ptr .cpp .h
 ./scat --create_ptr .cpp .cpp
+./scat --create_ptr .cpp .hpp
+move ./scat /usr/local/bin
 # rm -rf ./langs

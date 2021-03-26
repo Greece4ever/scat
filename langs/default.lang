@@ -1,17 +1,43 @@
 .default
 
+KWD_CONT:
+    function BLUE YELLOW (, \c, {, }, ), ;
+    class BLUE YELLOW (, \c, {, }, ), ;
+    new PURPLE BLUE (, \c, {, }, ), ;
+    let BLUE YELLOW ;, =, {, }, (, )    
+    const BLUE YELLOW ;, =, {, }, (, )    
+    var BLUE YELLOW ;, =, {, }, (, )    
+    def BLUE YELLOW (, \c, {, }, ), ;
+    fn BLUE YELLOW (, \c, {, }, ), ;
+
 KWD:
+
+
+    declare      PURPLE
+    end          PURPLE
+    typeset      PURPLE
+    then         PURPLE
+    integer      PURPLE
+    select       PURPLE
+    readonly     PURPLE
+    coproc       PURPLE
+    case         PURPLE
+    repeat       PURPLE
+    time         PURPLE
+    esac         PURPLE
+    until        PURPLE
+    nocorrect    PURPLE
+    foreach      PURPLE
     await        PURPLE
     break        PURPLE
     case         PURPLE
     catch        PURPLE
-    class        BLUE
-    const        BLUE
     continue     PURPLE
     debugger     PURPLE
     default      PURPLE
     delete       PURPLE
     do           PURPLE
+    fi           PURPLE
     else         PURPLE
     enum         PURPLE
     export       PURPLE
@@ -19,15 +45,12 @@ KWD:
     false        BLUE
     finally      PURPLE
     for          PURPLE
-    function     BLUE
     if           PURPLE
     implements   PURPLE
     import       PURPLE
     in           PURPLE
     instanceof   PURPLE
     interface    PURPLE
-    let          BLUE    
-    new          PURPLE
     null         BLUE
     package      PURPLE
     private      BLUE
@@ -42,12 +65,10 @@ KWD:
     try          PURPLE
     true         BLUE
     typeof       BLUE
-    var          BLUE
     void         BLUE
     while        PURPLE
     with         PURPLE
     yield        PURPLE
-KWD:
     alignas BLUE
     alignof BLUE
     and     BLUE
@@ -63,10 +84,6 @@ KWD:
     break   PURPLE
     case    PURPLE
     catch   PURPLE
-    char    BLUE
-    char8_t  BLUE
-    char16_t BLUE
-    char32_t BLUE
     class   BLUE
     compl   BLUE
     concept BLUE
@@ -82,8 +99,8 @@ KWD:
     decltype BLUE
     default BLUE
     delete  PURPLE
-    do      PURPLE
-    double  BLUE
+    done      PURPLE
+    rm      BLUE
     dynamic_cast BLUE
     else    PURPLE
     enum     BLUE
@@ -91,14 +108,11 @@ KWD:
     export  PURPLE
     extern  BLUE
     false   BLUE
-    float   BLUE
     for     PURPLE
     friend  BLUE
-    goto    BLUE
+    goto    PURPLE
     if      PURPLE
     inline  blue
-    int     blue
-    long    blue
     mutable blue
     namespace blue
     new       PURPLE
@@ -117,13 +131,12 @@ KWD:
     reinterpret_cast    YELLOW 
     requires        PURPLE
     return          purple
-    short           BLUE
     signed          BLUE
     sizeof          BLUE
+    std             RED
     static          BLUE
     static_assert   YELLOW
     static_cast     YELLOW
-    struct          BLUE
     switch          PURPLE
     synchronized    BLUE
     template        YELLOW
@@ -133,15 +146,23 @@ KWD:
     try             PURPLE
     typedef         BLUE
     typeid          blue
-    typename        BLUE
     union           BLUE
     unsigned        BLUE
     using           PURPLE
     virtual         BLUE
-    void            BLUE
     volatile        BLUE
     while           PURPLE
-KWD:
+    int BLUE      
+    float BLUE    
+    double BLUE   
+    short BLUE    
+    char BLUE     
+    void BLUE     
+    long BLUE     
+    bool BLUE     
+    struct BLUE   
+    typename BLUE 
+    self       BLUE
     False      BLUE     
     None       BLUE     
     True       BLUE     
@@ -151,9 +172,7 @@ KWD:
     async      PURPLE     
     await      PURPLE     
     break      PURPLE     
-    class      BLUE     
     continue   PURPLE   
-    def        BLUE 
     del        PURPLE 
     elif       PURPLE     
     else       PURPLE     
@@ -174,14 +193,16 @@ KWD:
     raise      PURPLE     
     return     PURPLE     
     try        PURPLE 
-    while      PURPLE     
-    with       PURPLE     
     yield      PURPLE
+    list       RED
+    tuple      RED
+    set        RED
+    dict       RED
+    print      YELLOW
+    range      YELLOW
 REP:
-    #       \n      YELLOW
     //       \n     GREY
-    /*      */      GREY
-    @       \n      BLUE
+    /*        */    GREY
+    "          "    GREEN
     '       '       GREEN
-    """     """     GREEN
-    "       "       GREEN
+    #       \n      GREY    

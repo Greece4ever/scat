@@ -15,15 +15,17 @@ KWD_CONT:
     #ifndef     PURPLE BLUE  \n
     #line       PURPLE BLUE  \n
     
-    int BLUE YELLOW     (, ;, =, ), *, &, \c
-    float BLUE YELLOW   (, ;, =, ), *, &, \c
-    double BLUE YELLOW  (, ;, =, ), *, &, \c
-    short BLUE YELLOW   (, ;, =, ), *, &, \c
-    char BLUE YELLOW    (, ;, =, ), *, &, \c
-    void BLUE YELLOW    (, ;, =, ), *, &, \c
-    long BLUE YELLOW    (, ;, =, ), *, &, \c
-    bool BLUE YELLOW    (, ;, =, ), *, &, \c
-    struct BLUE YELLOW    (, ;, =, ), *, &, \c
+    int BLUE YELLOW     (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    float BLUE YELLOW   (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    double BLUE YELLOW  (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    short BLUE YELLOW   (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    char BLUE YELLOW    (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    void BLUE YELLOW    (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    long BLUE YELLOW    (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    bool BLUE YELLOW    (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    struct BLUE YELLOW  (, ;, =, ), &, \c, {, }, \n, [, ], >, <
+    typename BLUE GREEN (, ;, =, ), &, \c, {, },[, ], >
+
 
 KWD:
     alignas BLUE
@@ -102,7 +104,6 @@ KWD:
     try             PURPLE
     typedef         BLUE
     typeid          blue
-    typename        BLUE
     union           BLUE
     unsigned        BLUE
     using           PURPLE

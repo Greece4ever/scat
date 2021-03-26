@@ -29,11 +29,9 @@
 
 #include <string.h>
 #define ___MAIN___ 0xFFFF
-int a = 0;
-
 #define f(x) std::cout << "DEBUG " << __LINE__ << "\n";
-
 #include "./db/SQL.cpp"
+#include <sstream>
 
 typedef unsigned int uint;
 
@@ -72,6 +70,8 @@ void awaitQuote(bool& seenQuote, std::string& line, std::vector<string>* endDeli
     }
 }
 
+// 
+
 void handleDigit(std::string& line, INT16& i, bool& previousNumRejected) {
     short index = findNumeric(line, i, previousNumRejected);
     if (index != -1) {
@@ -101,6 +101,34 @@ uint getLineCount(string_stream& file_stream) {
     return count;
 }
 
+
+struct line_stream{
+    uint line_count;
+    std::stringstream string_stream;
+};
+
+template<typename string_stream>
+line_stream getLineCountBuffer(string_stream& file_stream) {
+    std::stringstream buffer(std::stringstream::in | std::stringstream::out | std::stringstream::binary );
+    string line;
+    uint count = 0;
+    while (getline(file_stream, line) )
+    {
+        count++;
+        buffer << line + "\n";
+    }
+
+    line_stream stream;
+
+    buffer.clear();
+    buffer.seekg(0);
+
+    stream.line_count = count;
+    stream.string_stream = std::stringstream(buffer.str());
+    return  stream;
+}
+
+
 string numberZeros(string num, uint count) {
     string base = "";
     for (uint i=0; i < count; i++)
@@ -125,7 +153,8 @@ void check_line(
              string,           // START KEYWORD
              vector<string>>   // END KEYWORDS
     > kwds_cont={},
-    vector<array<string, 2>> smbls={} // Symbols may not be full matches like keywrods
+    vector<array<string, 2>> smbls={}, // Symbols may not be full matches like keywrods
+    int lineCount = -1
 ) 
 {
     INT8 kwd_size = kwds.size();
@@ -137,17 +166,27 @@ void check_line(
 
     std::vector<string>* endDelimiter = nullptr;
 
+
     unsigned int line_count = 0;
     bool include_str = true;
 
-    uint max_line = getLineCount(file_handler);
-    uint max_line_size = std::to_string(max_line).size();
+    uint max_line; 
+    uint max_line_size;
+
+    if (lineCount == -1) 
+        max_line = getLineCount(file_handler);
+    else 
+        max_line = lineCount;
+    
+    max_line_size = std::to_string(max_line).size();
+
 
     while(getline(file_handler, line)) 
     {
         line_count++;
         line.push_back('\n');
             
+
             std::cout << colors::ENDC;
             std::cout << colors::GREY;
         std::cout << number(line_count, max_line_size) << "| ";
@@ -243,22 +282,17 @@ string get_home_dir() {
     return home;
 }
 
-
-
 int main(int argc, char *argv[]) {
     vector<array<string, 2>> symbols = {
         {"-", colors::YELLOW},   {"*", colors::YELLOW},   {"/", colors::YELLOW},
         {"&",  colors::YELLOW},  {"|",  colors::YELLOW},  {"^",  colors::YELLOW},
 
-        {"%", colors::YELLOW},   {"~", colors::YELLOW},   {".",  colors::YELLOW},  
-        {"(",  colors::BOLD},    {")",  colors::BOLD},    {"=",  colors::YELLOW},
-        
-        {"[",  colors::WHITE},   {"]",  colors::WHITE}, {":",  colors::YELLOW},
-        {"{",  colors::WHITE},   {"}",  colors::WHITE}, 
-        {"<",  colors::YELLOW},  {">",  colors::YELLOW}, 
+        {"%", colors::YELLOW},  {"~", colors::YELLOW},   {".",  colors::YELLOW},  
+        {"=",  colors::YELLOW}, {":",  colors::WHITE},    {"{",  colors::WHITE},   
+        {"}",  colors::WHITE},  {"<",  colors::YELLOW},  {">",  colors::YELLOW}, 
 
         {";",  colors::WHITE},   {"+", colors::YELLOW},  {"!",  colors::YELLOW},            
-    };
+    };    
 
     const string storage_path = get_home_dir() + "/.config/scat/";
     DB database(storage_path + "sources.sqlite3");
@@ -287,8 +321,15 @@ int main(int argc, char *argv[]) {
         case 0:
         case 1: 
         {
-            ERROR("No file or arguments specified");
-            exit(EXIT_FAILURE);
+            string file_ext = ".default";
+            get_kwds(database, file_ext);
+
+            line_stream buffer_ = getLineCountBuffer(std::cin);
+
+            check_line(buffer_.string_stream, cs::KEYWORDS, cs::REP_KWDS, cs::KWDS_CONT, symbols);
+
+            // ERROR("No file or arguments specified");
+            exit(EXIT_SUCCESS);
             break;
         }
         case 2:
@@ -306,12 +347,6 @@ int main(int argc, char *argv[]) {
                 ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
                 exit(EXIT_FAILURE);
             }
-
-            for (int i=0; i < cs::REP_KWDS.size(); i++)
-            {
-                std::cout << std::get<0>(cs::REP_KWDS[i]) << "\n";
-            } 
-            // exit(0);
             
             // Here it is 
             check_line(file, cs::KEYWORDS, cs::REP_KWDS, cs::KWDS_CONT, symbols);
@@ -388,7 +423,7 @@ int main(int argc, char *argv[]) {
 /*
 
 function run {
-    g++ $1 -o scat -std=c++17 -l sqlite3 &&
+    g++ $1 -o scat -std=c++17 -l sqlite3
 }
 
 */

@@ -91,7 +91,7 @@ namespace cs
 
     int RptKwdInsertionCallback(void *NotUsed, int count, char **data, char **columns)
     {
-        if (count < 4)
+        if (count < 3)
             return EXIT_SUCCESS;
         cs::REP_KWDS.push_back( { getChar( data[0] ), { getChar(data[1]) }, colors::SScodes.at(data[2]) } );
         return EXIT_SUCCESS;
@@ -537,8 +537,6 @@ void get_kwds(DB &database, string language, string language0 = "")
 
     
     database.execute(FQUERY, true, cs::KwdContCallback);
-
-
 }
 
 // Delete a language
