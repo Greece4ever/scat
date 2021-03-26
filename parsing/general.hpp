@@ -13,7 +13,7 @@
 bool fullMatch(string& str, string target, short index) {
     if (index != 0) {
     
-        if (isalpha(str[index - 1]) || str[index - 1] == '_')
+        if (isalpha(str[index - 1]) || str[index - 1] == '_' /* || str[index - 1] == '.' */)
             return false;
         // std::cout << "passed word start test" << "\n";
     }

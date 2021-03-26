@@ -2,17 +2,27 @@
 #include <string>
 #include <iostream>
 #include <ctype.h>
-using std::string;
+    using std::string;
+    string current_color = "";
+
+    string ACTIVATE(string x) {
+        std::cout << x;
+        current_color = x;
+        return x;
+    }
+
+    void DEACTIVATE() {
+        std::cout << "\033[0m";
+        current_color = "";
+    }
+
 #include "colors.h"
 #define INT8 unsigned char
 #define INT16 unsigned short
-#define ACTIVATE(x) std::cout << x;
-#define DEACTIVATE() std::cout << "\033[0m"
 #include <fstream>
 
 #define ERROR(x) std::cerr << colors::RED << "[Error] " << colors::ENDC << x << "\n"
 #define WARNING(x) std::cerr << colors::YELLOW << "[Warning] " << colors::ENDC << x << "\n"
-// #include "./cnfg.cpp"
 
 #include "./parsing/number.hpp"
 #include "./parsing/general.hpp"
@@ -65,7 +75,7 @@ void awaitQuote(bool& seenQuote, std::string& line, std::vector<string>* endDeli
 void handleDigit(std::string& line, INT16& i, bool& previousNumRejected) {
     short index = findNumeric(line, i, previousNumRejected);
     if (index != -1) {
-        ACTIVATE(colors::DARKGREEN);
+        ACTIVATE("\u001b[32;1m");
         for (INT16 k=i; k < index; k++) {
             std::cout << line[k];
             i++;
@@ -74,7 +84,36 @@ void handleDigit(std::string& line, INT16& i, bool& previousNumRejected) {
     }
 }
 
-// { "def", colors::YELLOW, "(", colors::YELLOW }
+template<typename string_stream>
+uint getLineCount(string_stream& file_stream) {
+    file_stream.clear();
+    file_stream.seekg(0);
+
+    string line;
+    uint count = 0;
+    while (getline(file_stream, line) )
+    {
+        count++;
+    }
+    file_stream.clear();
+    file_stream.seekg(0);
+
+    return count;
+}
+
+string numberZeros(string num, uint count) {
+    string base = "";
+    for (uint i=0; i < count; i++)
+    {
+        base += "0";
+    }
+    return base + num;
+}
+
+string number(uint num, uint MaxZeros) {
+    string str_num = std::to_string(num); 
+    return numberZeros(str_num, MaxZeros - str_num.size());
+}
 
 template<typename string_stream>
 void check_line(
@@ -101,10 +140,20 @@ void check_line(
     unsigned int line_count = 0;
     bool include_str = true;
 
+    uint max_line = getLineCount(file_handler);
+    uint max_line_size = std::to_string(max_line).size();
+
     while(getline(file_handler, line)) 
     {
         line_count++;
         line.push_back('\n');
+            
+            std::cout << colors::ENDC;
+            std::cout << colors::GREY;
+        std::cout << number(line_count, max_line_size) << "| ";
+            std::cout << colors::ENDC;
+            std::cout << current_color;
+
 
         for (INT16 i=0; i < line.size(); i++) // each letter
         {
@@ -211,25 +260,24 @@ int main(int argc, char *argv[]) {
         {";",  colors::WHITE},   {"+", colors::YELLOW},  {"!",  colors::YELLOW},            
     };
 
-
     const string storage_path = get_home_dir() + "/.config/scat/";
     DB database(storage_path + "sources.sqlite3");
-    // std::cout << storage_path << "\n";
-    // if (!database.isOpen()) {
-        // auto dir = std::filesystem::create_directories(storage_path);
-        // database.connect(database.getPath());
-        // if (!database.isOpen()) {
-            // ERROR("Could not load sqlite3 db on path \"" + storage_path + "\"");
-            // exit(EXIT_FAILURE);
-        // }
-    // }
+    if (!database.isOpen()) {
+        WARNING("Database not opened, attempting again.");
+        auto dir = std::filesystem::create_directories(storage_path);
+        database.connect(database.getPath());
+        if (!database.isOpen()) {
+            ERROR("Could not load sqlite3 db on path \"" + storage_path + "\"");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     database.execute(R"sql(SELECT rowid FROM KWD_CONT_STRING where rowid="0")sql", false, cs::default_);
     cs::database = &database;
 
     if (database.isNoSuchTableError())
     {
-        std::cout << "nop table\n";
+        WARNING("Creating Tables");
         database.dropAllTables();
         init_dbs(database);
     }
@@ -247,17 +295,24 @@ int main(int argc, char *argv[]) {
         {
             string path = (std::string)argv[1];
             string file_ext = findExtension(path);
+            
             get_kwds(database, file_ext);
 
             std::ifstream file;
             file.open(path);
-
+            
             if (!file.is_open()) {
                 char *err = strerror(errno);
                 ERROR("Cannot access " + (std::string)"\"" + colors::UNDERLINE + path + colors::ENDC + "\"" + ": " + err);
                 exit(EXIT_FAILURE);
             }
 
+            for (int i=0; i < cs::REP_KWDS.size(); i++)
+            {
+                std::cout << std::get<0>(cs::REP_KWDS[i]) << "\n";
+            } 
+            // exit(0);
+            
             // Here it is 
             check_line(file, cs::KEYWORDS, cs::REP_KWDS, cs::KWDS_CONT, symbols);
             break;
@@ -334,7 +389,6 @@ int main(int argc, char *argv[]) {
 
 function run {
     g++ $1 -o scat -std=c++17 -l sqlite3 &&
-    ./scat test.py
 }
 
 */

@@ -1,5 +1,30 @@
 .cpp
 
+KWD_CONT:
+    #include    PURPLE GREEN \n
+    #pragma     PURPLE BLUE  \n
+    #define     PURPLE BLUE  \n
+    #error      PURPLE BLUE  \n
+    #warning    PURPLE BLUE  \n
+    #undef      PURPLE BLUE  \n
+    #if         PURPLE BLUE  \n
+    #else       PURPLE BLUE  \n
+    #elif       PURPLE BLUE  \n
+    #endif      PURPLE BLUE  \n
+    #ifdef      PURPLE BLUE  \n
+    #ifndef     PURPLE BLUE  \n
+    #line       PURPLE BLUE  \n
+    
+    int BLUE YELLOW     (, ;, =, ), *, &, \c
+    float BLUE YELLOW   (, ;, =, ), *, &, \c
+    double BLUE YELLOW  (, ;, =, ), *, &, \c
+    short BLUE YELLOW   (, ;, =, ), *, &, \c
+    char BLUE YELLOW    (, ;, =, ), *, &, \c
+    void BLUE YELLOW    (, ;, =, ), *, &, \c
+    long BLUE YELLOW    (, ;, =, ), *, &, \c
+    bool BLUE YELLOW    (, ;, =, ), *, &, \c
+    struct BLUE YELLOW    (, ;, =, ), *, &, \c
+
 KWD:
     alignas BLUE
     alignof BLUE
@@ -16,10 +41,6 @@ KWD:
     break   PURPLE
     case    PURPLE
     catch   PURPLE
-    char    BLUE
-    char8_t  BLUE
-    char16_t BLUE
-    char32_t BLUE
     class   BLUE
     compl   BLUE
     concept BLUE
@@ -36,7 +57,6 @@ KWD:
     default BLUE
     delete  PURPLE
     do      PURPLE
-    double  BLUE
     dynamic_cast BLUE
     else    PURPLE
     enum     BLUE
@@ -44,14 +64,11 @@ KWD:
     export  PURPLE
     extern  BLUE
     false   BLUE
-    float   BLUE
     for     PURPLE
     friend  BLUE
-    goto    BLUE
+    goto    PURPLE
     if      PURPLE
     inline  blue
-    int     blue
-    long    blue
     mutable blue
     namespace blue
     new       PURPLE
@@ -70,14 +87,12 @@ KWD:
     reinterpret_cast    YELLOW 
     requires        PURPLE
     return          purple
-    short           BLUE
     signed          BLUE
     sizeof          BLUE
     std             RED
     static          BLUE
     static_assert   YELLOW
     static_cast     YELLOW
-    struct          BLUE
     switch          PURPLE
     synchronized    BLUE
     template        YELLOW
@@ -92,12 +107,12 @@ KWD:
     unsigned        BLUE
     using           PURPLE
     virtual         BLUE
-    void            BLUE
     volatile        BLUE
     while           PURPLE
 REP:
     //  \n  GREY
-    #   \n  YELLOW
     /* */   GREY
     "   "   GREEN
+    R"  "   GREEN
     '   '   GREEN
+    

@@ -275,7 +275,7 @@ void printKwds(langData data) {
         ACTIVATE( colors::IScodes.at( std::stoi( __colors[1] ) )  );
             for (k=0; k < delimeters.size() - 1; k++) 
             {
-                std::cout << delimeters[i] << ", ";
+                std::cout << delimeters[k] << ", ";
             }
             std::cout << delimeters[k] << "\n";
         DEACTIVATE();

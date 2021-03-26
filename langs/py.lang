@@ -4,6 +4,7 @@ KWD_CONT:
     class BLUE YELLOW (, \n, :
     def   BLUE YELLOW (, \n, :
 KWD:
+    self       BLUE
     False      BLUE     
     None       BLUE     
     True       BLUE     

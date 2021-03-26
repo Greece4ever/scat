@@ -9,3 +9,5 @@
 !/langs
 !*.lang
 !*.md
+test.cpp
+test.lang

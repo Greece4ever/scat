@@ -16,10 +16,6 @@
 #ifndef WARNING
     #define WARNING(x) std::cerr << colors::YELLOW << "[Warning] " << colors::ENDC << x << "\n"
 #endif
-#ifndef ACTIVATE
-    #define ACTIVATE(x) std::cout << x;
-    #define DEACTIVATE() std::cout << "\033[0m"
-#endif
 #define __LANG_PARSE__ 0
 #include "./lang_parse.cpp"
 #define SQL_GET_LAST_INSERT_ID "SELECT last_insert_rowid()"
@@ -33,7 +29,8 @@ using std::vector;
 
 std::map<std::string, std::string> escapedChars = {
     {"\\n", "\n"},
-    {"\\t", "\t"}
+    {"\\t", "\t"},
+    {"\\c", ","}
 };
 
 string getChar(std::string char_) {
@@ -94,8 +91,8 @@ namespace cs
 
     int RptKwdInsertionCallback(void *NotUsed, int count, char **data, char **columns)
     {
-        string s1 = getChar( data[1] );
-        // std::cout << data[0] << " " << data[1] << " " << data[2] << "\n";
+        if (count < 4)
+            return EXIT_SUCCESS;
         cs::REP_KWDS.push_back( { getChar( data[0] ), { getChar(data[1]) }, colors::SScodes.at(data[2]) } );
         return EXIT_SUCCESS;
     }
@@ -117,6 +114,8 @@ public:
     {
         *this->path_ = path;
         this->connect(path);
+        // this->execute("PRAGMA foreign_keys = ON");
+        // this->commit();        
     }
 
     void connect(std::string path)
@@ -268,6 +267,8 @@ string insertSymbolAndGetId(DB &database, string STARTING_KEYWORD, string ENDING
 
 string createKWD_CONT(DB& database, string LANG_ID,string COLOR0, string COLOR1, string STARTING_KEYWORD) {
     database.insert("KWD_CONT", {LANG_ID, COLOR0, COLOR1, STARTING_KEYWORD}, true, nullptr);
+    
+
     string query = R"sql(
         SELECT rowid FROM KWD_CONT
         WHERE LANG_ID="$1" and COLOR0="$1" and COLOR1="$1" and STARTING_KEYWORD="$1"
@@ -282,6 +283,7 @@ string createKWD_CONT(DB& database, string LANG_ID,string COLOR0, string COLOR1,
             replaceOne(query, "$1", COLOR1);
         escapeSQL(STARTING_KEYWORD);
                 replaceOne(query, "$1", STARTING_KEYWORD);
+
 
     database.execute(query, true, cs::callback);
     return cs::data[0];
@@ -352,7 +354,7 @@ KWD_ID createLang(DB &database, langData data)
     }
     else
         database.execute(SQL_GET_LAST_INSERT_ID, true, cs::callback);
-
+    
     string langID = cs::data[0];
     vector<string> KEYWORD_IDS;
     vector<string> SYMBOL_IDS;
@@ -373,6 +375,7 @@ KWD_ID createLang(DB &database, langData data)
         SYMBOL_IDS.push_back(insertSymbolAndGetId(database, start_kwd, endng_kwd, color));
     }
 
+    
     for (uint i=0; i < data.kwd_cont.size(); i++) 
     {
         auto& colors = std::get<0>(data.kwd_cont[i]);
@@ -424,8 +427,11 @@ const string comma = ",";
 
 string VecToString(vector<string> &vect)
 {
+    if (vect.size() == 0)
+        return "()";
+
     string arr = "(";
-    int i = 0;
+    int i;
     for (i = 0; i < vect.size() - 1; i++)
     {
         arr += vect[i] + ",";
@@ -529,6 +535,7 @@ void get_kwds(DB &database, string language, string language0 = "")
     )sql";
     replaceOne(FQUERY, "$1", langID);
 
+    
     database.execute(FQUERY, true, cs::KwdContCallback);
 
 
@@ -581,6 +588,55 @@ void deleteLang(DB &database, string language)
 
     replaceOne(query, "$1", language);
     database.execute(query);
+
+    string(R"sql(
+        DELETE FROM LANG
+        WHERE LANG.NAME="$1"
+    )sql")
+        .swap(query);
+
+    auto __a = vector<string>();
+    cs::data.swap(__a);
+
+    string(R"sql(
+        SELECT rowid FROM KWD_CONT
+        WHERE LANG_ID="$1" 
+    )sql").swap(query);
+        replaceOne(query, "$1", langID);
+
+    database.execute(query, true, cs::insertCallback);
+    __a = cs::data;
+
+    string(R"sql(
+        DELETE FROM KWD_CONT
+        WHERE LANG_ID="$1"
+    )sql").swap(query);
+        replaceOne(query, "$1", langID);        
+
+    database.execute(query);
+
+
+    string(R"sql(
+        DELETE FROM LANG_KWD_CONT
+        WHERE LANG="$1"
+    )sql").swap(query);
+        replaceOne(query, "$1", langID);        
+
+    database.execute(query);
+
+    for (uint i=0; i < __a.size(); i++)
+    {
+        string id = __a[i];
+        string(R"sql(
+            DELETE FROM KWD_CONT_STRING
+            WHERE KWD_CONT_ID="$1"
+        )sql").swap(query);
+            replaceOne(query, "$1", id);        
+
+        database.execute(query);
+    }
+    
+    database.commit();
 }
 
 void createLangPointer(DB &database, string langFrom, string langTo)
@@ -643,7 +699,7 @@ int cs::KwdContCallback(void *NotUsed, int count, char **data, char **columns)
         ending_keywords.push_back( getChar( cs::data[i] ) );
     }
 
-    cs::KWDS_CONT.push_back( { {color0, color1}, s_kwrd, ending_keywords } );
+    cs::KWDS_CONT.push_back( { {color0, color1}, getChar( s_kwrd ), ending_keywords } );
     return EXIT_SUCCESS;
 }
 
