@@ -4,9 +4,9 @@ KWD_CONT:
     function BLUE YELLOW (, \c, {, }, ), ;
     class BLUE YELLOW (, \c, {, }, ), ;
     new PURPLE BLUE (, \c, {, }, ), ;
-    let BLUE YELLOW ;, =, {, }, (, )    
-    const BLUE YELLOW ;, =, {, }, (, )    
-    var BLUE YELLOW ;, =, {, }, (, )    
+    let BLUE YELLOW ;, =, {, }, (, ), ], [    
+    const BLUE YELLOW ;, =, {, }, (, ), ], [ 
+    var BLUE YELLOW ;, =, {, }, (, ), ], [
 KWD:
     await        PURPLE
     break        PURPLE
