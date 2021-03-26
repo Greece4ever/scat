@@ -1,5 +1,5 @@
 rm -rf ~/.config/scat # Remove cache file if exists
-g++ -o scat main.cpp -std=c++17 -l sqlite3
+g++ -O3 -o scat main.cpp -std=c++17 -l sqlite3
 echo "Finished Compiling and Linking"
 chmod +x ./scat
 for i in $(ls ./langs/);
